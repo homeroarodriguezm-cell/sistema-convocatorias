@@ -1,34 +1,68 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { supabase } from "./supabaseClient";
 
 export default function App() {
   const [convocatorias, setConvocatorias] = useState([]);
   const [nombre, setNombre] = useState("");
 
-  const agregar = () => {
+  // ✅ Cargar datos al iniciar
+  const cargarConvocatorias = async () => {
+    const { data, error } = await supabase
+      .from("convocatorias")
+      .select("*")
+      .order("id", { ascending: false });
+
+    if (error) {
+      console.error(error);
+    } else {
+      setConvocatorias(data);
+    }
+  };
+
+  useEffect(() => {
+    cargarConvocatorias();
+  }, []);
+
+  // ✅ Crear nueva convocatoria (guardar)
+  const agregar = async () => {
     if (!nombre) return;
 
-    const nueva = {
-      nombre,
-      financiamiento: "",
-      moneda: "USD",
-      area: "",
-      fecha: "",
-      responsable: ""
-    };
+    const { error } = await supabase.from("convocatorias").insert([
+      {
+        nombre,
+        financiamiento: "",
+        moneda: "USD",
+        area: "",
+        fecha: null,
+        responsable: "",
+      },
+    ]);
 
-    setConvocatorias([...convocatorias, nueva]);
+    if (error) {
+      console.error(error);
+    } else {
+      cargarConvocatorias();
+    }
+
     setNombre("");
   };
 
-  const actualizarCampo = (index, campo, valor) => {
-    const copia = [...convocatorias];
-    copia[index][campo] = valor;
-    setConvocatorias(copia);
+  // ✅ Actualizar campo en BD
+  const actualizarCampo = async (id, campo, valor) => {
+    const { error } = await supabase
+      .from("convocatorias")
+      .update({ [campo]: valor })
+      .eq("id", id);
+
+    if (error) {
+      console.error(error);
+    } else {
+      cargarConvocatorias();
+    }
   };
 
   return (
     <div style={{ padding: "30px", fontFamily: "Arial", background: "#f5f5f5", minHeight: "100vh" }}>
-      
       <h1>Sistema de Convocatorias 📊</h1>
 
       {/* CREAR */}
@@ -44,30 +78,29 @@ export default function App() {
 
       {/* TARJETAS */}
       <div style={{ display: "grid", gap: "15px", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))" }}>
-        
-        {convocatorias.map((c, i) => (
+        {convocatorias.map((c) => (
           <div
-            key={i}
+            key={c.id}
             style={{
               background: "white",
               padding: "15px",
               borderRadius: "10px",
-              boxShadow: "0 2px 6px rgba(0,0,0,0.1)"
+              boxShadow: "0 2px 6px rgba(0,0,0,0.1)",
             }}
           >
             <h3>{c.nombre}</h3>
 
             <label>💰 Financiamiento:</label>
             <input
-              value={c.financiamiento}
-              onChange={(e) => actualizarCampo(i, "financiamiento", e.target.value)}
+              value={c.financiamiento || ""}
+              onChange={(e) => actualizarCampo(c.id, "financiamiento", e.target.value)}
               style={{ width: "100%", marginBottom: "8px" }}
             />
 
             <label>💱 Moneda:</label>
             <select
-              value={c.moneda}
-              onChange={(e) => actualizarCampo(i, "moneda", e.target.value)}
+              value={c.moneda || "USD"}
+              onChange={(e) => actualizarCampo(c.id, "moneda", e.target.value)}
               style={{ width: "100%", marginBottom: "8px" }}
             >
               <option>USD</option>
@@ -77,30 +110,29 @@ export default function App() {
 
             <label>🧠 Área:</label>
             <input
-              value={c.area}
-              onChange={(e) => actualizarCampo(i, "area", e.target.value)}
+              value={c.area || ""}
+              onChange={(e) => actualizarCampo(c.id, "area", e.target.value)}
               style={{ width: "100%", marginBottom: "8px" }}
             />
 
             <label>📅 Fecha límite:</label>
             <input
               type="date"
-              value={c.fecha}
-              onChange={(e) => actualizarCampo(i, "fecha", e.target.value)}
+              value={c.fecha || ""}
+              onChange={(e) => actualizarCampo(c.id, "fecha", e.target.value)}
               style={{ width: "100%", marginBottom: "8px" }}
             />
 
             <label>👤 Responsable:</label>
             <input
-              value={c.responsable}
-              onChange={(e) => actualizarCampo(i, "responsable", e.target.value)}
+              value={c.responsable || ""}
+              onChange={(e) => actualizarCampo(c.id, "responsable", e.target.value)}
               style={{ width: "100%", marginBottom: "8px" }}
             />
           </div>
         ))}
-
       </div>
-
     </div>
   );
 }
+``
