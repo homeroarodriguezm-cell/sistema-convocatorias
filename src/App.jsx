@@ -9,20 +9,29 @@ export default function App() {
 
     const nueva = {
       nombre,
-      estatus: "En preparación",
-      fecha: new Date().toLocaleDateString(),
+      financiamiento: "",
+      moneda: "USD",
+      area: "",
+      fecha: "",
+      responsable: ""
     };
 
     setConvocatorias([...convocatorias, nueva]);
     setNombre("");
   };
 
+  const actualizarCampo = (index, campo, valor) => {
+    const copia = [...convocatorias];
+    copia[index][campo] = valor;
+    setConvocatorias(copia);
+  };
+
   return (
     <div style={{ padding: "30px", fontFamily: "Arial", background: "#f5f5f5", minHeight: "100vh" }}>
       
-      <h1 style={{ marginBottom: "20px" }}>Sistema de Convocatorias 📊</h1>
+      <h1>Sistema de Convocatorias 📊</h1>
 
-      {/* FORMULARIO */}
+      {/* CREAR */}
       <div style={{ marginBottom: "20px" }}>
         <input
           value={nombre}
@@ -30,13 +39,11 @@ export default function App() {
           placeholder="Nombre de la convocatoria"
           style={{ padding: "10px", width: "300px", marginRight: "10px" }}
         />
-        <button onClick={agregar} style={{ padding: "10px 15px" }}>
-          Agregar
-        </button>
+        <button onClick={agregar}>Agregar</button>
       </div>
 
-      {/* LISTA EN TARJETAS */}
-      <div style={{ display: "grid", gap: "15px", gridTemplateColumns: "repeat(auto-fill, minmax(250px, 1fr))" }}>
+      {/* TARJETAS */}
+      <div style={{ display: "grid", gap: "15px", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))" }}>
         
         {convocatorias.map((c, i) => (
           <div
@@ -45,18 +52,50 @@ export default function App() {
               background: "white",
               padding: "15px",
               borderRadius: "10px",
-              boxShadow: "0 2px 6px rgba(0,0,0,0.1)",
+              boxShadow: "0 2px 6px rgba(0,0,0,0.1)"
             }}
           >
             <h3>{c.nombre}</h3>
 
-            <p style={{ fontSize: "14px", color: "#555" }}>
-              📌 Estatus: {c.estatus}
-            </p>
+            <label>💰 Financiamiento:</label>
+            <input
+              value={c.financiamiento}
+              onChange={(e) => actualizarCampo(i, "financiamiento", e.target.value)}
+              style={{ width: "100%", marginBottom: "8px" }}
+            />
 
-            <p style={{ fontSize: "14px", color: "#555" }}>
-              📅 Fecha: {c.fecha}
-            </p>
+            <label>💱 Moneda:</label>
+            <select
+              value={c.moneda}
+              onChange={(e) => actualizarCampo(i, "moneda", e.target.value)}
+              style={{ width: "100%", marginBottom: "8px" }}
+            >
+              <option>USD</option>
+              <option>EUR</option>
+              <option>Bs</option>
+            </select>
+
+            <label>🧠 Área:</label>
+            <input
+              value={c.area}
+              onChange={(e) => actualizarCampo(i, "area", e.target.value)}
+              style={{ width: "100%", marginBottom: "8px" }}
+            />
+
+            <label>📅 Fecha límite:</label>
+            <input
+              type="date"
+              value={c.fecha}
+              onChange={(e) => actualizarCampo(i, "fecha", e.target.value)}
+              style={{ width: "100%", marginBottom: "8px" }}
+            />
+
+            <label>👤 Responsable:</label>
+            <input
+              value={c.responsable}
+              onChange={(e) => actualizarCampo(i, "responsable", e.target.value)}
+              style={{ width: "100%", marginBottom: "8px" }}
+            />
           </div>
         ))}
 
