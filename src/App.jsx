@@ -5,29 +5,23 @@ export default function App() {
   const [convocatorias, setConvocatorias] = useState([]);
   const [nombre, setNombre] = useState("");
 
-  // ✅ Cargar datos
   const cargarConvocatorias = async () => {
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from("convocatorias")
       .select("*")
       .order("id", { ascending: false });
 
-    if (error) {
-      console.error("ERROR SELECT:", error);
-    } else {
-      setConvocatorias(data || []);
-    }
+    setConvocatorias(data || []);
   };
 
   useEffect(() => {
     cargarConvocatorias();
   }, []);
 
-  // ✅ Agregar nueva convocatoria
   const agregar = async () => {
     if (!nombre) return;
 
-    const { error } = await supabase.from("convocatorias").insert([
+    await supabase.from("convocatorias").insert([
       {
         nombre,
         organizacion: "",
@@ -36,90 +30,36 @@ export default function App() {
         area: "",
         fecha: null,
         responsable: "",
-        estatus: "En preparación"
+        estatus: "En preparación",
+        link: ""
       }
     ]);
 
-    if (error) {
-      console.error("ERROR INSERT:", error);
-    } else {
-      cargarConvocatorias();
-      setNombre("");
-    }
+    cargarConvocatorias();
+    setNombre("");
   };
 
-  // ✅ ✅ ✅ ESTE ES EL FIX REAL
+  // ✅ FIX CORRECTO (ya no usamos "valor")
   const actualizarCampo = async (id, campo, valor) => {
 
-    // ✅ actualizar UI correctamente
+    // actualizar UI correctamente
     const copia = convocatorias.map((item) =>
       item.id === id ? { ...item, [campo]: valor } : item
     );
 
     setConvocatorias(copia);
 
-    // ✅ actualizar BD correctamente
-    const { error } = await supabase
+    // actualizar BD correctamente
+    await supabase
       .from("convocatorias")
-      .update({ [campo]: valor })   // 🔥 FIX REAL AQUÍ
+      .update({ [campo]: valor })
       .eq("id", id);
-
-    if (error) {
-      console.error("ERROR UPDATE:", error);
-    }
-  };
-
-  // ✅ limpiar números
-  const limpiarNumero = (valor) => {
-    if (!valor) return 0;
-    const limpio = valor.toString().replace(/\./g, "");
-    const num = parseFloat(limpio);
-    return isNaN(num) ? 0 : num;
-  };
-
-  const totales = { USD: 0, EUR: 0, Bs: 0 };
-
-  convocatorias.forEach(c => {
-    const v = limpiarNumero(c.financiamiento);
-    if (c.moneda === "USD") totales.USD += v;
-    if (c.moneda === "EUR") totales.EUR += v;
-    if (c.moneda === "Bs") totales.Bs += v;
-  });
-
-  const colorEstatus = (estatus) => {
-    switch (estatus) {
-      case "En preparación": return "#facc15";
-      case "Postulada": return "#3b82f6";
-      case "Aprobada": return "#22c55e";
-      case "No seleccionada": return "#ef4444";
-      default: return "#ccc";
-    }
   };
 
   return (
     <div style={{ padding: "30px", fontFamily: "Arial", background: "#f5f5f5" }}>
 
       <h1>Sistema de Convocatorias 📊</h1>
-
-      {/* DASHBOARD */}
-      <div style={{
-        display: "grid",
-        gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-        gap: "15px",
-        marginBottom: "30px"
-      }}>
-        <div style={{ background: "white", padding: "15px", borderRadius: "10px" }}>
-          <h3>📊 Total</h3>
-          <p>{convocatorias.length}</p>
-        </div>
-
-        <div style={{ background: "white", padding: "15px", borderRadius: "10px" }}>
-          <h3>💰 Financiamiento</h3>
-          <p>USD: ${totales.USD.toLocaleString()}</p>
-          <p>EUR: €{totales.EUR.toLocaleString()}</p>
-          <p>Bs: Bs {totales.Bs.toLocaleString()}</p>
-        </div>
-      </div>
 
       {/* CREAR */}
       <div style={{ marginBottom: "20px" }}>
@@ -141,8 +81,7 @@ export default function App() {
           <div key={c.id} style={{
             background: "white",
             padding: "15px",
-            borderRadius: "10px",
-            borderLeft: `6px solid ${colorEstatus(c.estatus)}`
+            borderRadius: "10px"
           }}>
 
             <input
@@ -192,6 +131,16 @@ export default function App() {
               <option>EUR</option>
               <option>Bs</option>
             </select>
+
+            {/* ✅ NUEVO CAMPO LINK */}
+            <label>🔗 Enlace:</label>
+            <input
+              value={c.link || ""}
+              onChange={(e) =>
+                actualizarCampo(c.id, "link", e.target.value)
+              }
+              placeholder="https://..."
+            />
 
           </div>
         ))}
