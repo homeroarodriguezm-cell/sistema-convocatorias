@@ -53,12 +53,13 @@ export default function App() {
       .eq("id", id);
   };
 
-  // ✅ FILTRO COMPLETO (incluye responsable)
+  // ✅ filtro con área incluido
   const convocatoriasFiltradas = convocatorias.filter(c =>
     (c.nombre || "").toLowerCase().includes(busqueda.toLowerCase()) ||
     (c.organizacion || "").toLowerCase().includes(busqueda.toLowerCase()) ||
     (c.estatus || "").toLowerCase().includes(busqueda.toLowerCase()) ||
-    (c.responsable || "").toLowerCase().includes(busqueda.toLowerCase())
+    (c.responsable || "").toLowerCase().includes(busqueda.toLowerCase()) ||
+    (c.area || "").toLowerCase().includes(busqueda.toLowerCase())
   );
 
   const resumenEstatus = {
@@ -102,10 +103,9 @@ export default function App() {
           Sistema de Convocatorias
         </h1>
 
-        <img src={logo} alt="logo" style={{ height: "60px" }} />
+        {logo}
       </div>
 
-      {/* CONTENEDOR */}
       <div style={{
         background: "white",
         padding: "25px",
@@ -150,7 +150,7 @@ export default function App() {
           <input
             value={busqueda}
             onChange={(e) => setBusqueda(e.target.value)}
-            placeholder="Buscar por nombre, organización, estatus o responsable..."
+            placeholder="Buscar por nombre, organización, área, responsable o estatus..."
             style={{
               width: "100%",
               padding: "10px",
@@ -218,6 +218,16 @@ export default function App() {
                 value={c.responsable || ""}
                 onChange={(e) =>
                   actualizarCampo(c.id, "responsable", e.target.value)
+                }
+                style={{ width: "100%" }}
+              />
+
+              {/* ✅ NUEVO CAMPO ÁREA */}
+              <label>Área</label>
+              <input
+                value={c.area || ""}
+                onChange={(e) =>
+                  actualizarCampo(c.id, "area", e.target.value)
                 }
                 style={{ width: "100%" }}
               />
