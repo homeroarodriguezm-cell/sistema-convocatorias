@@ -5,6 +5,7 @@ export default function App() {
   const [convocatorias, setConvocatorias] = useState([]);
   const [nombre, setNombre] = useState("");
 
+  // ✅ Cargar datos
   const cargarConvocatorias = async () => {
     const { data } = await supabase
       .from("convocatorias")
@@ -18,10 +19,11 @@ export default function App() {
     cargarConvocatorias();
   }, []);
 
+  // ✅ Agregar convocatoria
   const agregar = async () => {
     if (!nombre) return;
 
-    await supabase.from("convocatorias").insert([
+    const { error } = await supabase.from("convocatorias").insert([
       {
         nombre,
         organizacion: "",
@@ -34,20 +36,25 @@ export default function App() {
       }
     ]);
 
-    cargarConvocatorias();
-    setNombre("");
+    if (!error) {
+      cargarConvocatorias();
+      setNombre("");
+    } else {
+      console.error("ERROR INSERT:", error);
+    }
   };
 
+  // ✅ 🔥 FIX REAL AQUÍ
   const actualizarCampo = async (id, campo, valor) => {
 
-    // ✅ actualizar UI correctamente
+    // ✅ actualizar UI BIEN
     const copia = convocatorias.map((item) =>
       item.id === id ? { ...item, [campo]: valor } : item
     );
 
     setConvocatorias(copia);
 
-    // ✅ guardar en BD correctamente
+    // ✅ actualizar BD BIEN
     const { error } = await supabase
       .from("convocatorias")
       .update({ [campo]: valor })
@@ -58,6 +65,25 @@ export default function App() {
     }
   };
 
+  // ✅ limpiar número
+  const limpiarNumero = (valor) => {
+    if (!valor) return 0;
+    const limpio = valor.toString().replace(/\./g, "");
+    const num = parseFloat(limpio);
+    return isNaN(num) ? 0 : num;
+  };
+
+  // ✅ totales
+  const totales = { USD: 0, EUR: 0, Bs: 0 };
+
+  convocatorias.forEach(c => {
+    const val = limpiarNumero(c.financiamiento);
+    if (c.moneda === "USD") totales.USD += val;
+    if (c.moneda === "EUR") totales.EUR += val;
+    if (c.moneda === "Bs") totales.Bs += val;
+  });
+
+  // ✅ colores
   const colorEstatus = (estatus) => {
     switch (estatus) {
       case "En preparación": return "#facc15";
@@ -73,6 +99,28 @@ export default function App() {
 
       <h1>Sistema de Convocatorias 📊</h1>
 
+      {/* ✅ DASHBOARD */}
+      <div style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+        gap: "15px",
+        marginBottom: "30px"
+      }}>
+
+        <div style={{ background: "white", padding: "15px", borderRadius: "10px" }}>
+          <h3>📊 Total</h3>
+          <p>{convocatorias.length}</p>
+        </div>
+
+        <div style={{ background: "white", padding: "15px", borderRadius: "10px" }}>
+          <h3>💰 Financiamiento</h3>
+          <p>USD: ${totales.USD.toLocaleString()}</p>
+          <p>EUR: €{totales.EUR.toLocaleString()}</p>
+          <p>Bs: Bs {totales.Bs.toLocaleString()}</p>
+        </div>
+
+      </div>
+
       {/* CREAR */}
       <div style={{ marginBottom: "20px" }}>
         <input
@@ -84,7 +132,11 @@ export default function App() {
       </div>
 
       {/* TARJETAS */}
-      <div style={{ display: "grid", gap: "15px", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))" }}>
+      <div style={{
+        display: "grid",
+        gap: "15px",
+        gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))"
+      }}>
         {convocatorias.map((c) => (
           <div key={c.id} style={{
             background: "white",
@@ -93,16 +145,13 @@ export default function App() {
             borderLeft: `6px solid ${colorEstatus(c.estatus)}`
           }}>
 
-            {/* ✅ NOMBRE EDITABLE */}
             <input
               value={c.nombre || ""}
               onChange={(e) =>
                 actualizarCampo(c.id, "nombre", e.target.value)
               }
-              style={{ fontWeight: "bold", fontSize: "16px", width: "100%" }}
             />
 
-            {/* ✅ ORGANIZACIÓN */}
             <label>🏢 Organización:</label>
             <input
               value={c.organizacion || ""}
@@ -111,7 +160,6 @@ export default function App() {
               }
             />
 
-            {/* ✅ ESTATUS */}
             <label>📌 Estatus:</label>
             <select
               value={c.estatus || "En preparación"}
@@ -144,31 +192,6 @@ export default function App() {
               <option>EUR</option>
               <option>Bs</option>
             </select>
-
-            <label>🧠 Área:</label>
-            <input
-              value={c.area || ""}
-              onChange={(e) =>
-                actualizarCampo(c.id, "area", e.target.value)
-              }
-            />
-
-            <label>📅 Fecha:</label>
-            <input
-              type="date"
-              value={c.fecha || ""}
-              onChange={(e) =>
-                actualizarCampo(c.id, "fecha", e.target.value || null)
-              }
-            />
-
-            <label>👤 Responsable:</label>
-            <input
-              value={c.responsable || ""}
-              onChange={(e) =>
-                actualizarCampo(c.id, "responsable", e.target.value)
-              }
-            />
 
           </div>
         ))}
