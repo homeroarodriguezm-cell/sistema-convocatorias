@@ -5,29 +5,23 @@ export default function App() {
   const [convocatorias, setConvocatorias] = useState([]);
   const [nombre, setNombre] = useState("");
 
-  // ✅ CARGAR DATOS
   const cargarConvocatorias = async () => {
     const { data, error } = await supabase
       .from("convocatorias")
       .select("*")
       .order("id", { ascending: false });
 
-    if (error) {
-      console.error("ERROR SELECT:", error);
-    } else {
-      setConvocatorias(data || []);
-    }
+    if (!error) setConvocatorias(data || []);
   };
 
   useEffect(() => {
     cargarConvocatorias();
   }, []);
 
-  // ✅ CREAR NUEVA
   const agregar = async () => {
     if (!nombre) return;
 
-    const { error } = await supabase.from("convocatorias").insert([
+    await supabase.from("convocatorias").insert([
       {
         nombre,
         financiamiento: "",
@@ -38,28 +32,33 @@ export default function App() {
       }
     ]);
 
-    if (!error) cargarConvocatorias();
-
+    cargarConvocatorias();
     setNombre("");
   };
 
-  // ✅ ACTUALIZAR DATOS
   const actualizarCampo = async (id, campo, valor) => {
-    // actualizar visualmente
     const copia = convocatorias.map((item) =>
       item.id === id ? { ...item, [campo]: valor } : item
     );
+
     setConvocatorias(copia);
 
-    // guardar en BD
     await supabase
       .from("convocatorias")
       .update({ [campo]: valor })
       .eq("id", id);
   };
 
-  // ✅ MÉTRICAS
-  const totalConvocatorias = convocatorias.length;
+  // ✅ FUNCIÓN CORREGIDA
+  const limpiarNumero = (valor) => {
+    if (!valor) return 0;
+
+    // quitar puntos de miles
+    const limpio = valor.toString().replace(/\./g, "");
+
+    const numero = parseFloat(limpio);
+    return isNaN(numero) ? 0 : numero;
+  };
 
   const totales = {
     USD: 0,
@@ -68,27 +67,19 @@ export default function App() {
   };
 
   convocatorias.forEach(c => {
-    const valor = parseFloat(c.financiamiento);
-    if (!isNaN(valor)) {
-      if (c.moneda === "USD") totales.USD += valor;
-      if (c.moneda === "EUR") totales.EUR += valor;
-      if (c.moneda === "Bs") totales.Bs += valor;
-    }
+    const valor = limpiarNumero(c.financiamiento);
+
+    if (c.moneda === "USD") totales.USD += valor;
+    if (c.moneda === "EUR") totales.EUR += valor;
+    if (c.moneda === "Bs") totales.Bs += valor;
   });
 
-  const totalConFecha = convocatorias.filter(c => c.fecha).length;
-
   return (
-    <div style={{
-      padding: "30px",
-      fontFamily: "Arial",
-      background: "#f5f5f5",
-      minHeight: "100vh"
-    }}>
+    <div style={{ padding: "30px", fontFamily: "Arial", background: "#f5f5f5", minHeight: "100vh" }}>
 
       <h1>Sistema de Convocatorias 📊</h1>
 
-      {/* ✅ DASHBOARD */}
+      {/* DASHBOARD */}
       <div style={{
         display: "grid",
         gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
@@ -97,8 +88,8 @@ export default function App() {
       }}>
 
         <div style={{ background: "white", padding: "15px", borderRadius: "10px" }}>
-          <h3>📊 Total convocatorias</h3>
-          <p>{totalConvocatorias}</p>
+          <h3>📊 Total</h3>
+          <p>{convocatorias.length}</p>
         </div>
 
         <div style={{ background: "white", padding: "15px", borderRadius: "10px" }}>
@@ -110,12 +101,12 @@ export default function App() {
 
         <div style={{ background: "white", padding: "15px", borderRadius: "10px" }}>
           <h3>📅 Con fecha</h3>
-          <p>{totalConFecha}</p>
+          <p>{convocatorias.filter(c => c.fecha).length}</p>
         </div>
 
       </div>
 
-      {/* ✅ CREAR */}
+      {/* CREAR */}
       <div style={{ marginBottom: "20px" }}>
         <input
           value={nombre}
@@ -126,81 +117,69 @@ export default function App() {
         <button onClick={agregar}>Agregar</button>
       </div>
 
-      {/* ✅ TARJETAS */}
+      {/* TARJETAS */}
       <div style={{
         display: "grid",
         gap: "15px",
         gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))"
       }}>
         {convocatorias.map((c) => (
-          <div
-            key={c.id}
-            style={{
-              background: "white",
-              padding: "15px",
-              borderRadius: "10px",
-              boxShadow: "0 2px 6px rgba(0,0,0,0.1)"
-            }}
-          >
+          <div key={c.id} style={{ background: "white", padding: "15px", borderRadius: "10px" }}>
+
             <h3>{c.nombre}</h3>
 
-            <div style={{ marginBottom: "10px" }}>
+            <div>
               <label>💰 Financiamiento:</label>
               <input
                 value={c.financiamiento || ""}
                 onChange={(e) =>
                   actualizarCampo(c.id, "financiamiento", e.target.value)
                 }
-                style={{ width: "100%" }}
               />
             </div>
 
-            <div style={{ marginBottom: "10px" }}>
+            <div>
               <label>💱 Moneda:</label>
               <select
                 value={c.moneda || "USD"}
                 onChange={(e) =>
                   actualizarCampo(c.id, "moneda", e.target.value)
                 }
-                style={{ width: "100%" }}
               >
-                <option value="USD">USD</option>
-                <option value="EUR">EUR</option>
-                <option value="Bs">Bs</option>
+                <option>USD</option>
+                <option>EUR</option>
+                <option>Bs</option>
               </select>
             </div>
 
-            <div style={{ marginBottom: "10px" }}>
+            <div>
               <label>🧠 Área:</label>
               <input
                 value={c.area || ""}
                 onChange={(e) =>
                   actualizarCampo(c.id, "area", e.target.value)
                 }
-                style={{ width: "100%" }}
               />
             </div>
 
-            <div style={{ marginBottom: "10px" }}>
-              <label>📅 Fecha límite:</label>
+            <div>
+              <label>📅 Fecha:</label>
               <input
                 type="date"
                 value={c.fecha || ""}
                 onChange={(e) =>
                   actualizarCampo(c.id, "fecha", e.target.value || null)
                 }
-                style={{ width: "100%" }}
               />
             </div>
 
-            <div style={{ marginBottom: "10px" }}>
+            <div>
               <label>👤 Responsable:</label>
               <input
                 value={c.responsable || ""}
                 onChange={(e) =>
                   actualizarCampo(c.id, "responsable", e.target.value)
                 }
-                style={{ width: "100%" }}
               />
             </div>
 
