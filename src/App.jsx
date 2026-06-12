@@ -5,7 +5,7 @@ export default function App() {
   const [convocatorias, setConvocatorias] = useState([]);
   const [nombre, setNombre] = useState("");
 
-  // ✅ Cargar datos
+  // ✅ CARGAR DATOS
   const cargarConvocatorias = async () => {
     const { data, error } = await supabase
       .from("convocatorias")
@@ -23,7 +23,7 @@ export default function App() {
     cargarConvocatorias();
   }, []);
 
-  // ✅ Agregar convocatoria
+  // ✅ CREAR NUEVA
   const agregar = async () => {
     if (!nombre) return;
 
@@ -43,14 +43,15 @@ export default function App() {
     setNombre("");
   };
 
-  // ✅ Actualizar campo
+  // ✅ ACTUALIZAR DATOS
   const actualizarCampo = async (id, campo, valor) => {
+    // actualizar visualmente
     const copia = convocatorias.map((item) =>
       item.id === id ? { ...item, [campo]: valor } : item
     );
-
     setConvocatorias(copia);
 
+    // guardar en BD
     await supabase
       .from("convocatorias")
       .update({ [campo]: valor })
@@ -60,44 +61,61 @@ export default function App() {
   // ✅ MÉTRICAS
   const totalConvocatorias = convocatorias.length;
 
-  const totalFinanciamiento = convocatorias.reduce((acc, c) => {
-    const val = parseFloat(c.financiamiento);
-    return acc + (isNaN(val) ? 0 : val);
-  }, 0);
+  const totales = {
+    USD: 0,
+    EUR: 0,
+    Bs: 0
+  };
 
-  const proximas = convocatorias.filter(c => c.fecha).length;
+  convocatorias.forEach(c => {
+    const valor = parseFloat(c.financiamiento);
+    if (!isNaN(valor)) {
+      if (c.moneda === "USD") totales.USD += valor;
+      if (c.moneda === "EUR") totales.EUR += valor;
+      if (c.moneda === "Bs") totales.Bs += valor;
+    }
+  });
+
+  const totalConFecha = convocatorias.filter(c => c.fecha).length;
 
   return (
-    <div style={{ padding: "30px", fontFamily: "Arial", background: "#f5f5f5", minHeight: "100vh" }}>
+    <div style={{
+      padding: "30px",
+      fontFamily: "Arial",
+      background: "#f5f5f5",
+      minHeight: "100vh"
+    }}>
 
       <h1>Sistema de Convocatorias 📊</h1>
 
       {/* ✅ DASHBOARD */}
       <div style={{
         display: "grid",
-        gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+        gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
         gap: "15px",
         marginBottom: "30px"
       }}>
-        
+
         <div style={{ background: "white", padding: "15px", borderRadius: "10px" }}>
-          <h3>📊 Total</h3>
+          <h3>📊 Total convocatorias</h3>
           <p>{totalConvocatorias}</p>
         </div>
 
         <div style={{ background: "white", padding: "15px", borderRadius: "10px" }}>
           <h3>💰 Financiamiento</h3>
-          <p>${totalFinanciamiento.toLocaleString()}</p>
+          <p>USD: ${totales.USD.toLocaleString()}</p>
+          <p>EUR: €{totales.EUR.toLocaleString()}</p>
+          <p>Bs: Bs {totales.Bs.toLocaleString()}</p>
         </div>
 
         <div style={{ background: "white", padding: "15px", borderRadius: "10px" }}>
           <h3>📅 Con fecha</h3>
-          <p>{proximas}</p>
+          <p>{totalConFecha}</p>
         </div>
 
       </div>
 
-      {/* CREAR */}
+      {/* ✅ CREAR */}
       <div style={{ marginBottom: "20px" }}>
         <input
           value={nombre}
@@ -108,65 +126,81 @@ export default function App() {
         <button onClick={agregar}>Agregar</button>
       </div>
 
-      {/* TARJETAS */}
-      <div style={{ display: "grid", gap: "15px", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))" }}>
+      {/* ✅ TARJETAS */}
+      <div style={{
+        display: "grid",
+        gap: "15px",
+        gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))"
+      }}>
         {convocatorias.map((c) => (
-          <div key={c.id} style={{ background: "white", padding: "15px", borderRadius: "10px" }}>
-            
+          <div
+            key={c.id}
+            style={{
+              background: "white",
+              padding: "15px",
+              borderRadius: "10px",
+              boxShadow: "0 2px 6px rgba(0,0,0,0.1)"
+            }}
+          >
             <h3>{c.nombre}</h3>
 
-            <div>
+            <div style={{ marginBottom: "10px" }}>
               <label>💰 Financiamiento:</label>
               <input
                 value={c.financiamiento || ""}
                 onChange={(e) =>
                   actualizarCampo(c.id, "financiamiento", e.target.value)
                 }
+                style={{ width: "100%" }}
               />
             </div>
 
-            <div>
+            <div style={{ marginBottom: "10px" }}>
               <label>💱 Moneda:</label>
               <select
                 value={c.moneda || "USD"}
                 onChange={(e) =>
                   actualizarCampo(c.id, "moneda", e.target.value)
                 }
+                style={{ width: "100%" }}
               >
-                <option>USD</option>
-                <option>EUR</option>
-                <option>Bs</option>
+                <option value="USD">USD</option>
+                <option value="EUR">EUR</option>
+                <option value="Bs">Bs</option>
               </select>
             </div>
 
-            <div>
+            <div style={{ marginBottom: "10px" }}>
               <label>🧠 Área:</label>
               <input
                 value={c.area || ""}
                 onChange={(e) =>
                   actualizarCampo(c.id, "area", e.target.value)
                 }
+                style={{ width: "100%" }}
               />
             </div>
 
-            <div>
-              <label>📅 Fecha:</label>
+            <div style={{ marginBottom: "10px" }}>
+              <label>📅 Fecha límite:</label>
               <input
                 type="date"
                 value={c.fecha || ""}
                 onChange={(e) =>
                   actualizarCampo(c.id, "fecha", e.target.value || null)
                 }
+                style={{ width: "100%" }}
               />
             </div>
 
-            <div>
+            <div style={{ marginBottom: "10px" }}>
               <label>👤 Responsable:</label>
               <input
                 value={c.responsable || ""}
                 onChange={(e) =>
                   actualizarCampo(c.id, "responsable", e.target.value)
                 }
+                style={{ width: "100%" }}
               />
             </div>
 
@@ -176,4 +210,3 @@ export default function App() {
     </div>
   );
 }
-``
