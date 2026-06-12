@@ -7,19 +7,20 @@ export default function App() {
 
   // ✅ Cargar datos
   const cargarConvocatorias = async () => {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("convocatorias")
       .select("*")
       .order("id", { ascending: false });
 
-    setConvocatorias(data || []);
+    if (!error) setConvocatorias(data || []);
+    else console.error(error);
   };
 
   useEffect(() => {
     cargarConvocatorias();
   }, []);
 
-  // ✅ Agregar convocatoria
+  // ✅ Agregar nueva convocatoria
   const agregar = async () => {
     if (!nombre) return;
 
@@ -44,17 +45,16 @@ export default function App() {
     }
   };
 
-  // ✅ 🔥 FIX REAL AQUÍ
+  // ✅ ✅ ✅ CORRECCIÓN CLAVE AQUÍ
   const actualizarCampo = async (id, campo, valor) => {
 
-    // ✅ actualizar UI BIEN
+    // ✅ actualizar UI correctamente
     const copia = convocatorias.map((item) =>
       item.id === id ? { ...item, [campo]: valor } : item
     );
-
     setConvocatorias(copia);
 
-    // ✅ actualizar BD BIEN
+    // ✅ actualizar BD correctamente
     const { error } = await supabase
       .from("convocatorias")
       .update({ [campo]: valor })
@@ -69,21 +69,20 @@ export default function App() {
   const limpiarNumero = (valor) => {
     if (!valor) return 0;
     const limpio = valor.toString().replace(/\./g, "");
-    const num = parseFloat(limpio);
-    return isNaN(num) ? 0 : num;
+    const number = parseFloat(limpio);
+    return isNaN(number) ? 0 : number;
   };
 
-  // ✅ totales
   const totales = { USD: 0, EUR: 0, Bs: 0 };
 
   convocatorias.forEach(c => {
-    const val = limpiarNumero(c.financiamiento);
-    if (c.moneda === "USD") totales.USD += val;
-    if (c.moneda === "EUR") totales.EUR += val;
-    if (c.moneda === "Bs") totales.Bs += val;
+    const v = limpiarNumero(c.financiamiento);
+    if (c.moneda === "USD") totales.USD += v;
+    if (c.moneda === "EUR") totales.EUR += v;
+    if (c.moneda === "Bs") totales.Bs += v;
   });
 
-  // ✅ colores
+  // ✅ colores estatus
   const colorEstatus = (estatus) => {
     switch (estatus) {
       case "En preparación": return "#facc15";
@@ -99,14 +98,13 @@ export default function App() {
 
       <h1>Sistema de Convocatorias 📊</h1>
 
-      {/* ✅ DASHBOARD */}
+      {/* ✅ DASHBOARD RESTAURADO */}
       <div style={{
         display: "grid",
         gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
         gap: "15px",
         marginBottom: "30px"
       }}>
-
         <div style={{ background: "white", padding: "15px", borderRadius: "10px" }}>
           <h3>📊 Total</h3>
           <p>{convocatorias.length}</p>
@@ -118,7 +116,6 @@ export default function App() {
           <p>EUR: €{totales.EUR.toLocaleString()}</p>
           <p>Bs: Bs {totales.Bs.toLocaleString()}</p>
         </div>
-
       </div>
 
       {/* CREAR */}
