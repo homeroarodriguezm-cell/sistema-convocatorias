@@ -13,14 +13,14 @@ export default function App() {
       .order("id", { ascending: false });
 
     if (!error) setConvocatorias(data || []);
-    else console.error(error);
+    else console.error("ERROR SELECT:", error);
   };
 
   useEffect(() => {
     cargarConvocatorias();
   }, []);
 
-  // ✅ Agregar nueva convocatoria
+  // ✅ Agregar convocatoria
   const agregar = async () => {
     if (!nombre) return;
 
@@ -45,13 +45,14 @@ export default function App() {
     }
   };
 
-  // ✅ ✅ ✅ CORRECCIÓN CLAVE AQUÍ
+  // ✅ ✅ ✅ FIX REAL AQUÍ
   const actualizarCampo = async (id, campo, valor) => {
 
     // ✅ actualizar UI correctamente
     const copia = convocatorias.map((item) =>
       item.id === id ? { ...item, [campo]: valor } : item
     );
+
     setConvocatorias(copia);
 
     // ✅ actualizar BD correctamente
@@ -65,12 +66,12 @@ export default function App() {
     }
   };
 
-  // ✅ limpiar número
+  // ✅ limpiar números
   const limpiarNumero = (valor) => {
     if (!valor) return 0;
     const limpio = valor.toString().replace(/\./g, "");
-    const number = parseFloat(limpio);
-    return isNaN(number) ? 0 : number;
+    const n = parseFloat(limpio);
+    return isNaN(n) ? 0 : n;
   };
 
   const totales = { USD: 0, EUR: 0, Bs: 0 };
@@ -82,7 +83,6 @@ export default function App() {
     if (c.moneda === "Bs") totales.Bs += v;
   });
 
-  // ✅ colores estatus
   const colorEstatus = (estatus) => {
     switch (estatus) {
       case "En preparación": return "#facc15";
@@ -98,7 +98,7 @@ export default function App() {
 
       <h1>Sistema de Convocatorias 📊</h1>
 
-      {/* ✅ DASHBOARD RESTAURADO */}
+      {/* DASHBOARD */}
       <div style={{
         display: "grid",
         gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
