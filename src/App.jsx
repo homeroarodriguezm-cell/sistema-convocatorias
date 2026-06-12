@@ -5,19 +5,21 @@ export default function App() {
   const [convocatorias, setConvocatorias] = useState([]);
   const [nombre, setNombre] = useState("");
 
+  // ✅ Cargar datos
   const cargarConvocatorias = async () => {
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from("convocatorias")
       .select("*")
       .order("id", { ascending: false });
 
-    if (!error) setConvocatorias(data || []);
+    setConvocatorias(data || []);
   };
 
   useEffect(() => {
     cargarConvocatorias();
   }, []);
 
+  // ✅ Crear nueva convocatoria
   const agregar = async () => {
     if (!nombre) return;
 
@@ -28,7 +30,8 @@ export default function App() {
         moneda: "USD",
         area: "",
         fecha: null,
-        responsable: ""
+        responsable: "",
+        estatus: "En preparación"
       }
     ]);
 
@@ -36,6 +39,7 @@ export default function App() {
     setNombre("");
   };
 
+  // ✅ Actualizar campo
   const actualizarCampo = async (id, campo, valor) => {
     const copia = convocatorias.map((item) =>
       item.id === id ? { ...item, [campo]: valor } : item
@@ -49,37 +53,49 @@ export default function App() {
       .eq("id", id);
   };
 
-  // ✅ FUNCIÓN CORREGIDA
+  // ✅ Limpiar número
   const limpiarNumero = (valor) => {
     if (!valor) return 0;
-
-    // quitar puntos de miles
     const limpio = valor.toString().replace(/\./g, "");
-
-    const numero = parseFloat(limpio);
-    return isNaN(numero) ? 0 : numero;
+    const n = parseFloat(limpio);
+    return isNaN(n) ? 0 : n;
   };
 
-  const totales = {
-    USD: 0,
-    EUR: 0,
-    Bs: 0
-  };
+  // ✅ Totales por moneda
+  const totales = { USD: 0, EUR: 0, Bs: 0 };
 
   convocatorias.forEach(c => {
     const valor = limpiarNumero(c.financiamiento);
-
     if (c.moneda === "USD") totales.USD += valor;
     if (c.moneda === "EUR") totales.EUR += valor;
     if (c.moneda === "Bs") totales.Bs += valor;
   });
+
+  // ✅ Conteo por estatus
+  const resumenEstatus = {
+    preparacion: convocatorias.filter(c => c.estatus === "En preparación").length,
+    postuladas: convocatorias.filter(c => c.estatus === "Postulada").length,
+    aprobadas: convocatorias.filter(c => c.estatus === "Aprobada").length,
+    rechazadas: convocatorias.filter(c => c.estatus === "No seleccionada").length
+  };
+
+  // ✅ Colores de estatus
+  const colorEstatus = (estatus) => {
+    switch (estatus) {
+      case "En preparación": return "#facc15";
+      case "Postulada": return "#3b82f6";
+      case "Aprobada": return "#22c55e";
+      case "No seleccionada": return "#ef4444";
+      default: return "#ccc";
+    }
+  };
 
   return (
     <div style={{ padding: "30px", fontFamily: "Arial", background: "#f5f5f5", minHeight: "100vh" }}>
 
       <h1>Sistema de Convocatorias 📊</h1>
 
-      {/* DASHBOARD */}
+      {/* 🔥 DASHBOARD */}
       <div style={{
         display: "grid",
         gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
@@ -100,8 +116,11 @@ export default function App() {
         </div>
 
         <div style={{ background: "white", padding: "15px", borderRadius: "10px" }}>
-          <h3>📅 Con fecha</h3>
-          <p>{convocatorias.filter(c => c.fecha).length}</p>
+          <h3>📌 Estatus</h3>
+          <p>🟡 {resumenEstatus.preparacion}</p>
+          <p>🔵 {resumenEstatus.postuladas}</p>
+          <p>🟢 {resumenEstatus.aprobadas}</p>
+          <p>🔴 {resumenEstatus.rechazadas}</p>
         </div>
 
       </div>
@@ -121,12 +140,34 @@ export default function App() {
       <div style={{
         display: "grid",
         gap: "15px",
-        gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))"
+        gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))"
       }}>
         {convocatorias.map((c) => (
-          <div key={c.id} style={{ background: "white", padding: "15px", borderRadius: "10px" }}>
+          <div key={c.id} style={{
+            background: "white",
+            padding: "15px",
+            borderRadius: "10px",
+            borderLeft: `6px solid ${colorEstatus(c.estatus)}`
+          }}>
 
             <h3>{c.nombre}</h3>
+
+            {/* ✅ ESTATUS */}
+            <div>
+              <label>📌 Estatus:</label>
+              <select
+                value={c.estatus || "En preparación"}
+                onChange={(e) =>
+                  actualizarCampo(c.id, "estatus", e.target.value)
+                }
+                style={{ width: "100%" }}
+              >
+                <option>En preparación</option>
+                <option>Postulada</option>
+                <option>Aprobada</option>
+                <option>No seleccionada</option>
+              </select>
+            </div>
 
             <div>
               <label>💰 Financiamiento:</label>
