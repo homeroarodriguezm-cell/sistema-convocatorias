@@ -23,7 +23,7 @@ export default function App() {
     cargarConvocatorias();
   }, []);
 
-  // ✅ Crear nueva convocatoria
+  // ✅ Agregar convocatoria
   const agregar = async () => {
     if (!nombre) return;
 
@@ -38,42 +38,64 @@ export default function App() {
       }
     ]);
 
-    if (error) {
-      console.error("ERROR INSERT:", error);
-    } else {
-      cargarConvocatorias();
-    }
+    if (!error) cargarConvocatorias();
 
     setNombre("");
   };
 
-  // ✅ Actualizar campo (con UI inmediata)
+  // ✅ Actualizar campo
   const actualizarCampo = async (id, campo, valor) => {
-    // 🔹 Actualizar en pantalla
     const copia = convocatorias.map((item) =>
       item.id === id ? { ...item, [campo]: valor } : item
     );
+
     setConvocatorias(copia);
 
-    // 🔹 Guardar en BD
-    const { error } = await supabase
+    await supabase
       .from("convocatorias")
       .update({ [campo]: valor })
       .eq("id", id);
-
-    if (error) {
-      console.error("ERROR UPDATE:", error);
-    }
   };
 
+  // ✅ MÉTRICAS
+  const totalConvocatorias = convocatorias.length;
+
+  const totalFinanciamiento = convocatorias.reduce((acc, c) => {
+    const val = parseFloat(c.financiamiento);
+    return acc + (isNaN(val) ? 0 : val);
+  }, 0);
+
+  const proximas = convocatorias.filter(c => c.fecha).length;
+
   return (
-    <div style={{
-      padding: "30px",
-      fontFamily: "Arial",
-      background: "#f5f5f5",
-      minHeight: "100vh"
-    }}>
+    <div style={{ padding: "30px", fontFamily: "Arial", background: "#f5f5f5", minHeight: "100vh" }}>
+
       <h1>Sistema de Convocatorias 📊</h1>
+
+      {/* ✅ DASHBOARD */}
+      <div style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+        gap: "15px",
+        marginBottom: "30px"
+      }}>
+        
+        <div style={{ background: "white", padding: "15px", borderRadius: "10px" }}>
+          <h3>📊 Total</h3>
+          <p>{totalConvocatorias}</p>
+        </div>
+
+        <div style={{ background: "white", padding: "15px", borderRadius: "10px" }}>
+          <h3>💰 Financiamiento</h3>
+          <p>${totalFinanciamiento.toLocaleString()}</p>
+        </div>
+
+        <div style={{ background: "white", padding: "15px", borderRadius: "10px" }}>
+          <h3>📅 Con fecha</h3>
+          <p>{proximas}</p>
+        </div>
+
+      </div>
 
       {/* CREAR */}
       <div style={{ marginBottom: "20px" }}>
@@ -87,85 +109,64 @@ export default function App() {
       </div>
 
       {/* TARJETAS */}
-      <div style={{
-        display: "grid",
-        gap: "15px",
-        gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))"
-      }}>
+      <div style={{ display: "grid", gap: "15px", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))" }}>
         {convocatorias.map((c) => (
-          <div
-            key={c.id}
-            style={{
-              background: "white",
-              padding: "15px",
-              borderRadius: "10px",
-              boxShadow: "0 2px 6px rgba(0,0,0,0.1)"
-            }}
-          >
+          <div key={c.id} style={{ background: "white", padding: "15px", borderRadius: "10px" }}>
+            
             <h3>{c.nombre}</h3>
 
-            {/* 💰 Financiamiento */}
-            <div style={{ marginBottom: "10px" }}>
+            <div>
               <label>💰 Financiamiento:</label>
               <input
                 value={c.financiamiento || ""}
                 onChange={(e) =>
                   actualizarCampo(c.id, "financiamiento", e.target.value)
                 }
-                style={{ width: "100%", padding: "5px" }}
               />
             </div>
 
-            {/* 💱 Moneda */}
-            <div style={{ marginBottom: "10px" }}>
+            <div>
               <label>💱 Moneda:</label>
               <select
                 value={c.moneda || "USD"}
                 onChange={(e) =>
                   actualizarCampo(c.id, "moneda", e.target.value)
                 }
-                style={{ width: "100%", padding: "5px" }}
               >
-                <option value="USD">USD</option>
-                <option value="EUR">EUR</option>
-                <option value="Bs">Bs</option>
+                <option>USD</option>
+                <option>EUR</option>
+                <option>Bs</option>
               </select>
             </div>
 
-            {/* 🧠 Área */}
-            <div style={{ marginBottom: "10px" }}>
+            <div>
               <label>🧠 Área:</label>
               <input
                 value={c.area || ""}
                 onChange={(e) =>
                   actualizarCampo(c.id, "area", e.target.value)
                 }
-                style={{ width: "100%", padding: "5px" }}
               />
             </div>
 
-            {/* 📅 Fecha */}
-            <div style={{ marginBottom: "10px" }}>
-              <label>📅 Fecha límite:</label>
+            <div>
+              <label>📅 Fecha:</label>
               <input
                 type="date"
                 value={c.fecha || ""}
                 onChange={(e) =>
                   actualizarCampo(c.id, "fecha", e.target.value || null)
                 }
-                style={{ width: "100%", padding: "5px" }}
               />
             </div>
 
-            {/* 👤 Responsable */}
-            <div style={{ marginBottom: "10px" }}>
+            <div>
               <label>👤 Responsable:</label>
               <input
                 value={c.responsable || ""}
                 onChange={(e) =>
                   actualizarCampo(c.id, "responsable", e.target.value)
                 }
-                style={{ width: "100%", padding: "5px" }}
               />
             </div>
 
@@ -175,3 +176,4 @@ export default function App() {
     </div>
   );
 }
+``
