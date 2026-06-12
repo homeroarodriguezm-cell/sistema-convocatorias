@@ -5,24 +5,28 @@ export default function App() {
   const [convocatorias, setConvocatorias] = useState([]);
   const [nombre, setNombre] = useState("");
 
-  // ✅ cargar datos
+  // ✅ CARGAR DATOS
   const cargarConvocatorias = async () => {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("convocatorias")
       .select("*");
 
-    setConvocatorias(data || []);
+    if (error) {
+      console.error("ERROR SELECT:", error);
+    } else {
+      setConvocatorias(data || []);
+    }
   };
 
   useEffect(() => {
     cargarConvocatorias();
   }, []);
 
-  // ✅ agregar
+  // ✅ AGREGAR
   const agregar = async () => {
     if (!nombre) return;
 
-    await supabase.from("convocatorias").insert([
+    const { error } = await supabase.from("convocatorias").insert([
       {
         nombre,
         organizacion: "",
@@ -36,28 +40,36 @@ export default function App() {
       }
     ]);
 
-    cargarConvocatorias();
-    setNombre("");
+    if (error) {
+      console.error("ERROR INSERT:", error);
+    } else {
+      setNombre("");
+      cargarConvocatorias();
+    }
   };
 
-  // ✅ ✅ ✅ FIX REAL FINAL
+  // ✅ 🔥 FIX REAL (AHORA SÍ CORRECTO)
   const actualizarCampo = async (id, campo, valor) => {
 
-    // UI correcta
+    // ✅ actualizar UI correctamente
     const copia = convocatorias.map((item) =>
       item.id === id ? { ...item, [campo]: valor } : item
     );
 
     setConvocatorias(copia);
 
-    // BD correcta
-    await supabase
+    // ✅ actualizar BD correctamente
+    const { error } = await supabase
       .from("convocatorias")
       .update({ [campo]: valor })
       .eq("id", id);
+
+    if (error) {
+      console.error("ERROR UPDATE:", error);
+    }
   };
 
-  // ✅ DASHBOARD
+  // ✅ DASHBOARD - ESTATUS
   const resumenEstatus = {
     preparacion: convocatorias.filter(c => c.estatus === "En preparación").length,
     postuladas: convocatorias.filter(c => c.estatus === "Postulada").length,
@@ -65,11 +77,13 @@ export default function App() {
     rechazadas: convocatorias.filter(c => c.estatus === "No seleccionada").length
   };
 
+  // ✅ DASHBOARD - PRÓXIMAS
   const proximas = convocatorias
     .filter(c => c.fecha)
     .sort((a, b) => new Date(a.fecha) - new Date(b.fecha))
     .slice(0, 3);
 
+  // ✅ COLORES
   const colorEstatus = (estatus) => {
     switch (estatus) {
       case "En preparación": return "#facc15";
@@ -97,16 +111,17 @@ export default function App() {
         gap: "20px",
         marginBottom: "30px"
       }}>
+
         <div style={{
           background: "white",
           padding: "20px",
           borderRadius: "12px"
         }}>
           <h3>📌 Estatus</h3>
-          <p>🟡 {resumenEstatus.preparacion}</p>
-          <p>🔵 {resumenEstatus.postuladas}</p>
-          <p>🟢 {resumenEstatus.aprobadas}</p>
-          <p>🔴 {resumenEstatus.rechazadas}</p>
+          <p>🟡 En preparación: {resumenEstatus.preparacion}</p>
+          <p>🔵 Postuladas: {resumenEstatus.postuladas}</p>
+          <p>🟢 Aprobadas: {resumenEstatus.aprobadas}</p>
+          <p>🔴 No seleccionadas: {resumenEstatus.rechazadas}</p>
         </div>
 
         <div style={{
@@ -116,9 +131,12 @@ export default function App() {
         }}>
           <h3>📅 Próximas</h3>
           {proximas.map(c => (
-            <p key={c.id}>{c.nombre} → {c.fecha}</p>
+            <p key={c.id}>
+              {c.nombre} → {c.fecha}
+            </p>
           ))}
         </div>
+
       </div>
 
       {/* CREAR */}
@@ -132,7 +150,7 @@ export default function App() {
         <button onClick={agregar}>Agregar</button>
       </div>
 
-      {/* TARJETAS PRO */}
+      {/* TARJETAS */}
       <div style={{
         display: "grid",
         gridTemplateColumns: "repeat(auto-fill, minmax(350px, 1fr))",
@@ -151,45 +169,51 @@ export default function App() {
               onChange={(e) =>
                 actualizarCampo(c.id, "nombre", e.target.value)
               }
-              style={{ width: "100%", fontWeight: "bold", marginBottom: "15px" }}
+              style={{
+                width: "100%",
+                fontWeight: "bold",
+                marginBottom: "15px"
+              }}
             />
 
-            <div style={{ marginBottom: "10px" }}>
-              <label>🏢 Organización</label>
-              <input value={c.organizacion || ""}
-                onChange={(e) =>
-                  actualizarCampo(c.id, "organizacion", e.target.value)}
-                style={{ width: "100%" }}
-              />
-            </div>
+            <label>🏢 Organización</label>
+            <input
+              value={c.organizacion || ""}
+              onChange={(e) =>
+                actualizarCampo(c.id, "organizacion", e.target.value)
+              }
+              style={{ width: "100%" }}
+            />
 
-            <div style={{ marginBottom: "10px" }}>
-              <label>📌 Estatus</label>
-              <select value={c.estatus || ""}
-                onChange={(e) =>
-                  actualizarCampo(c.id, "estatus", e.target.value)}
-                style={{ width: "100%" }}
-              >
-                <option>En preparación</option>
-                <option>Postulada</option>
-                <option>Aprobada</option>
-                <option>No seleccionada</option>
-              </select>
-            </div>
+            <label>📌 Estatus</label>
+            <select
+              value={c.estatus || "En preparación"}
+              onChange={(e) =>
+                actualizarCampo(c.id, "estatus", e.target.value)
+              }
+              style={{ width: "100%" }}
+            >
+              <option>En preparación</option>
+              <option>Postulada</option>
+              <option>Aprobada</option>
+              <option>No seleccionada</option>
+            </select>
 
-            <div style={{ display: "flex", gap: "10px" }}>
+            <div style={{ display: "flex", gap: "10px", marginTop: "10px" }}>
               <input
                 placeholder="Monto"
                 value={c.financiamiento || ""}
                 onChange={(e) =>
-                  actualizarCampo(c.id, "financiamiento", e.target.value)}
+                  actualizarCampo(c.id, "financiamiento", e.target.value)
+                }
                 style={{ flex: 1 }}
               />
 
               <select
                 value={c.moneda || "USD"}
                 onChange={(e) =>
-                  actualizarCampo(c.id, "moneda", e.target.value)}
+                  actualizarCampo(c.id, "moneda", e.target.value)
+                }
               >
                 <option>USD</option>
                 <option>EUR</option>
@@ -197,25 +221,42 @@ export default function App() {
               </select>
             </div>
 
-            <div style={{ marginTop: "10px" }}>
-              <label>📅 Fecha</label>
-              <input type="date"
-                value={c.fecha || ""}
-                onChange={(e) =>
-                  actualizarCampo(c.id, "fecha", e.target.value)}
-                style={{ width: "100%" }}
-              />
-            </div>
+            <label>🧠 Área</label>
+            <input
+              value={c.area || ""}
+              onChange={(e) =>
+                actualizarCampo(c.id, "area", e.target.value)
+              }
+              style={{ width: "100%" }}
+            />
 
-            <div style={{ marginTop: "10px" }}>
-              <label>🔗 Enlace</label>
-              <input
-                value={c.link || ""}
-                onChange={(e) =>
-                  actualizarCampo(c.id, "link", e.target.value)}
-                style={{ width: "100%" }}
-              />
-            </div>
+            <label>👤 Responsable</label>
+            <input
+              value={c.responsable || ""}
+              onChange={(e) =>
+                actualizarCampo(c.id, "responsable", e.target.value)
+              }
+              style={{ width: "100%" }}
+            />
+
+            <label>📅 Fecha</label>
+            <input
+              type="date"
+              value={c.fecha || ""}
+              onChange={(e) =>
+                actualizarCampo(c.id, "fecha", e.target.value)
+              }
+              style={{ width: "100%" }}
+            />
+
+            <label>🔗 Enlace</label>
+            <input
+              value={c.link || ""}
+              onChange={(e) =>
+                actualizarCampo(c.id, "link", e.target.value)
+              }
+              style={{ width: "100%" }}
+            />
 
           </div>
         ))}
