@@ -5,7 +5,7 @@ export default function App() {
   const [convocatorias, setConvocatorias] = useState([]);
   const [nombre, setNombre] = useState("");
 
-  // Cargar datos
+  // ✅ Cargar datos desde Supabase
   const cargarConvocatorias = async () => {
     console.log("Cargando datos...");
 
@@ -26,7 +26,7 @@ export default function App() {
     cargarConvocatorias();
   }, []);
 
-  // Agregar nueva convocatoria
+  // ✅ Crear nueva convocatoria
   const agregar = async () => {
     if (!nombre) return;
 
@@ -41,8 +41,8 @@ export default function App() {
           moneda: "USD",
           area: "",
           fecha: null,
-          responsable: "",
-        },
+          responsable: ""
+        }
       ])
       .select();
 
@@ -56,7 +56,7 @@ export default function App() {
     setNombre("");
   };
 
-  // Actualizar campo
+  // ✅ Actualizar datos
   const actualizarCampo = async (id, campo, valor) => {
     console.log("Actualizando:", campo, valor);
 
@@ -100,7 +100,7 @@ export default function App() {
               background: "white",
               padding: "15px",
               borderRadius: "10px",
-              boxShadow: "0 2px 6px rgba(0,0,0,0.1)",
+              boxShadow: "0 2px 6px rgba(0,0,0,0.1)"
             }}
           >
             <h3>{c.nombre}</h3>
@@ -108,22 +108,26 @@ export default function App() {
             <label>💰 Financiamiento:</label>
             <input
               value={c.financiamiento || ""}
-              onChange={(e) => actualizarCampo(c.id, "financiamiento", e.target.value)}
+              onChange={(e) =>
+                actualizarCampo(c.id, "financiamiento", e.target.value)
+              }
               style={{ width: "100%", marginBottom: "8px" }}
             />
 
             <label>💱 Moneda:</label>
             <select
               value={c.moneda || "USD"}
-              onChange={(e) => actualizarCampo(c.id, "moneda", e.target.value)}
+              onChange={(e) =>
+                actualizarCampo(c.id, "moneda", e.target.value)
+              }
               style={{ width: "100%", marginBottom: "8px" }}
             >
-              <option>USD</option>
-              <option>EUR</option>
-              <option>Bs</option>
+              <option value="USD">USD</option>
+              <option value="EUR">EUR</option>
+              <option value="Bs">Bs</option>
             </select>
 
             <label>🧠 Área:</label>
             <input
               value={c.area || ""}
-              onChange={(e) => actualizarCampo(c.id, "area", e.target.value)}
+              onChange={(e) =>
