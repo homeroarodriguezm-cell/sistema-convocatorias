@@ -7,6 +7,8 @@ export default function App() {
   const [nombre, setNombre] = useState("");
   const [busqueda, setBusqueda] = useState("");
 
+  const hoy = new Date(); // ✅ CLAVE
+
   const cargarConvocatorias = async () => {
     const { data, error } = await supabase
       .from("convocatorias")
@@ -53,7 +55,7 @@ export default function App() {
       .eq("id", id);
   };
 
-  // FILTRO COMPLETO
+  // ✅ FILTRO
   const convocatoriasFiltradas = convocatorias.filter(c =>
     (c.nombre || "").toLowerCase().includes(busqueda.toLowerCase()) ||
     (c.organizacion || "").toLowerCase().includes(busqueda.toLowerCase()) ||
@@ -62,17 +64,39 @@ export default function App() {
     (c.area || "").toLowerCase().includes(busqueda.toLowerCase())
   );
 
+  // ✅ ORDEN INTELIGENTE
+  const convocatoriasOrdenadas = [...convocatoriasFiltradas].sort((a, b) => {
+    const fechaA = a.fecha ? new Date(a.fecha) : null;
+    const fechaB = b.fecha ? new Date(b.fecha) : null;
+
+    const vencidaA = fechaA && fechaA < hoy;
+    const vencidaB = fechaB && fechaB < hoy;
+
+    // primero las activas
+    if (vencidaA !== vencidaB) {
+      return vencidaA ? 1 : -1;
+    }
+
+    // luego por fecha (más cercana primero)
+    if (fechaA && fechaB) {
+      return fechaA - fechaB;
+    }
+
+    return 0;
+  });
+
+  // ✅ PRÓXIMAS SOLO FUTURAS
+  const proximas = convocatorias
+    .filter(c => c.fecha && new Date(c.fecha) >= hoy)
+    .sort((a, b) => new Date(a.fecha) - new Date(b.fecha))
+    .slice(0, 3);
+
   const resumenEstatus = {
     preparacion: convocatorias.filter(c => c.estatus === "En preparación").length,
     postuladas: convocatorias.filter(c => c.estatus === "Postulada").length,
     aprobadas: convocatorias.filter(c => c.estatus === "Aprobada").length,
     rechazadas: convocatorias.filter(c => c.estatus === "No seleccionada").length
   };
-
-  const proximas = convocatorias
-    .filter(c => c.fecha)
-    .sort((a, b) => new Date(a.fecha) - new Date(b.fecha))
-    .slice(0, 3);
 
   const colorEstatus = (estatus) => {
     switch (estatus) {
@@ -92,7 +116,7 @@ export default function App() {
       fontFamily: "Montserrat, Trebuchet MS, Arial, sans-serif"
     }}>
 
-      {/* ✅ HEADER CORRECTO */}
+      {/* HEADER */}
       <div style={{
         display: "flex",
         justifyContent: "space-between",
@@ -103,15 +127,7 @@ export default function App() {
           Sistema de Convocatorias
         </h1>
 
-        {/* ✅ LOGO BIEN RENDERIZADO */}
-        <img
-          src={logo}
-          alt="Logo CSSI"
-          style={{
-            height: "60px",
-            objectFit: "contain"
-          }}
-        />
+        <img src={logo} alt="Logo" style={{ height: "60px" }} />
       </div>
 
       {/* CONTENEDOR */}
@@ -146,6 +162,7 @@ export default function App() {
             borderRadius: "12px"
           }}>
             <h3>📅 Próximas</h3>
+            {proximas.length === 0 && <p>No hay próximas convocatorias</p>}
             {proximas.map(c => (
               <p key={c.id}>
                 {c.nombre} → {c.fecha}
@@ -159,12 +176,12 @@ export default function App() {
           <input
             value={busqueda}
             onChange={(e) => setBusqueda(e.target.value)}
-            placeholder="Buscar por nombre, organización, área, responsable o estatus..."
+            placeholder="Buscar..."
             style={{
               width: "100%",
               padding: "10px",
-              border: "1px solid #ccc",
-              borderRadius: "8px"
+              borderRadius: "8px",
+              border: "1px solid #ccc"
             }}
           />
         </div>
@@ -182,7 +199,7 @@ export default function App() {
             style={{
               background: "#007AAE",
               color: "white",
-              padding: "10px 15px",
+              padding: "10px",
               border: "none",
               borderRadius: "6px"
             }}
@@ -197,110 +214,70 @@ export default function App() {
           gridTemplateColumns: "repeat(auto-fill, minmax(350px, 1fr))",
           gap: "20px"
         }}>
-          {convocatoriasFiltradas.map(c => (
-            <div key={c.id} style={{
-              background: "#F9FAFB",
-              padding: "20px",
-              borderRadius: "12px",
-              borderLeft: `6px solid ${colorEstatus(c.estatus)}`
-            }}>
+          {convocatoriasOrdenadas.map(c => {
 
-              <input
-                value={c.nombre || ""}
-                onChange={(e) =>
-                  actualizarCampo(c.id, "nombre", e.target.value)
-                }
-                style={{ width: "100%", fontWeight: "bold", marginBottom: "10px" }}
-              />
+            const vencida = c.fecha && new Date(c.fecha) < hoy;
 
-              <label>Organización</label>
-              <input
-                value={c.organizacion || ""}
-                onChange={(e) =>
-                  actualizarCampo(c.id, "organizacion", e.target.value)
-                }
-                style={{ width: "100%" }}
-              />
+            return (
+              <div key={c.id} style={{
+                background: "#F9FAFB",
+                padding: "20px",
+                borderRadius: "12px",
+                borderLeft: `6px solid ${colorEstatus(c.estatus)}`,
+                opacity: vencida ? 0.5 : 1 // ✅ EFECTO
+              }}>
 
-              <label>Responsable</label>
-              <input
-                value={c.responsable || ""}
-                onChange={(e) =>
-                  actualizarCampo(c.id, "responsable", e.target.value)
-                }
-                style={{ width: "100%" }}
-              />
-
-              <label>Área</label>
-              <input
-                value={c.area || ""}
-                onChange={(e) =>
-                  actualizarCampo(c.id, "area", e.target.value)
-                }
-                style={{ width: "100%" }}
-              />
-
-              <label>Estatus</label>
-              <select
-                value={c.estatus}
-                onChange={(e) =>
-                  actualizarCampo(c.id, "estatus", e.target.value)
-                }
-                style={{ width: "100%" }}
-              >
-                <option>En preparación</option>
-                <option>Postulada</option>
-                <option>Aprobada</option>
-                <option>No seleccionada</option>
-              </select>
-
-              <div style={{ display: "flex", gap: "10px", marginTop: "10px" }}>
-                <input
-                  placeholder="Monto"
-                  value={c.financiamiento || ""}
-                  onChange={(e) =>
-                    actualizarCampo(c.id, "financiamiento", e.target.value)
-                  }
-                  style={{ flex: 1 }}
+                <input value={c.nombre || ""}
+                  onChange={(e) => actualizarCampo(c.id, "nombre", e.target.value)}
+                  style={{ width: "100%", marginBottom: "10px" }}
                 />
 
-                <select
-                  value={c.moneda}
-                  onChange={(e) =>
-                    actualizarCampo(c.id, "moneda", e.target.value)
-                  }
-                >
-                  <option>USD</option>
-                  <option>EUR</option>
-                  <option>Bs</option>
+                <label>Organización</label>
+                <input value={c.organizacion || ""}
+                  onChange={(e) => actualizarCampo(c.id, "organizacion", e.target.value)}
+                  style={{ width: "100%" }}
+                />
+
+                <label>Responsable</label>
+                <input value={c.responsable || ""}
+                  onChange={(e) => actualizarCampo(c.id, "responsable", e.target.value)}
+                  style={{ width: "100%" }}
+                />
+
+                <label>Área</label>
+                <input value={c.area || ""}
+                  onChange={(e) => actualizarCampo(c.id, "area", e.target.value)}
+                  style={{ width: "100%" }}
+                />
+
+                <label>Estatus</label>
+                <select value={c.estatus}
+                  onChange={(e) => actualizarCampo(c.id, "estatus", e.target.value)}>
+                  <option>En preparación</option>
+                  <option>Postulada</option>
+                  <option>Aprobada</option>
+                  <option>No seleccionada</option>
                 </select>
+
+                <input value={c.financiamiento || ""}
+                  onChange={(e) => actualizarCampo(c.id, "financiamiento", e.target.value)}
+                />
+
+                <input type="date"
+                  value={c.fecha || ""}
+                  onChange={(e) => actualizarCampo(c.id, "fecha", e.target.value)}
+                />
+
+                <input value={c.link || ""}
+                  onChange={(e) => actualizarCampo(c.id, "link", e.target.value)}
+                />
+
               </div>
-
-              <label>Fecha</label>
-              <input
-                type="date"
-                value={c.fecha || ""}
-                onChange={(e) =>
-                  actualizarCampo(c.id, "fecha", e.target.value)
-                }
-                style={{ width: "100%" }}
-              />
-
-              <label>Enlace</label>
-              <input
-                value={c.link || ""}
-                onChange={(e) =>
-                  actualizarCampo(c.id, "link", e.target.value)
-                }
-                style={{ width: "100%" }}
-              />
-
-            </div>
-          ))}
+            )
+          })}
         </div>
 
       </div>
     </div>
   );
 }
-``
