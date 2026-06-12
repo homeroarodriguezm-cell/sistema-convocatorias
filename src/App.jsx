@@ -5,17 +5,20 @@ export default function App() {
   const [convocatorias, setConvocatorias] = useState([]);
   const [nombre, setNombre] = useState("");
 
-  // ✅ Cargar datos al iniciar
+  // ✅ Cargar datos
   const cargarConvocatorias = async () => {
+    console.log("Cargando datos...");
+
     const { data, error } = await supabase
       .from("convocatorias")
       .select("*")
       .order("id", { ascending: false });
 
     if (error) {
-      console.error(error);
+      console.error("ERROR SELECT:", error);
     } else {
-      setConvocatorias(data);
+      console.log("DATA:", data);
+      setConvocatorias(data || []);
     }
   };
 
@@ -23,41 +26,53 @@ export default function App() {
     cargarConvocatorias();
   }, []);
 
-  // ✅ Crear nueva convocatoria (guardar)
+  // ✅ Agregar nueva
   const agregar = async () => {
     if (!nombre) return;
 
-    const { error } = await supabase.from("convocatorias").insert([
-      {
-        nombre,
-        financiamiento: "",
-        moneda: "USD",
-        area: "",
-        fecha: null,
-        responsable: "",
-      },
-    ]);
+    console.log("Insertando...");
+
+    const { data, error } = await supabase
+      .from("convocatorias")
+      .insert([
+        {
+          nombre,
+          financiamiento: "",
+          moneda: "USD",
+          area: "",
+          fecha: null,
+          responsable: "",
+        },
+      ])
+      .select(); // IMPORTANTE
 
     if (error) {
-      console.error(error);
+      console.error("ERROR INSERT:", error);
     } else {
+      console.log("INSERT OK:", data);
       cargarConvocatorias();
     }
 
     setNombre("");
   };
 
-  // ✅ Actualizar campo en BD
+  // ✅ Actualizar campo
   const actualizarCampo = async (id, campo, valor) => {
-    const { error } = await supabase
+    console.log("Actualizando:", campo, valor);
+
+    const updateData = {};
+    updateData[campo] = valor;
+
+    const { data, error } = await supabase
       .from("convocatorias")
-      .update({ [campo]: valor })
-      .eq("id", id);
+      .update(updateData)
+      .eq("id", id)
+      .select();
 
     if (error) {
-      console.error(error);
+      console.error("ERROR UPDATE:", error);
     } else {
-      cargarConvocatorias();
+      console.log("UPDATE OK:", data);
     }
   };
 
@@ -119,20 +134,6 @@ export default function App() {
             <input
               type="date"
               value={c.fecha || ""}
-              onChange={(e) => actualizarCampo(c.id, "fecha", e.target.value)}
-              style={{ width: "100%", marginBottom: "8px" }}
-            />
-
-            <label>👤 Responsable:</label>
-            <input
-              value={c.responsable || ""}
-              onChange={(e) => actualizarCampo(c.id, "responsable", e.target.value)}
-              style={{ width: "100%", marginBottom: "8px" }}
-            />
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-``
+              onChange={(e) =>
+                actualizarCampo(c.id, "fecha", e.target.value || null)
+              }
