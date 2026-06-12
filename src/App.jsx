@@ -53,7 +53,7 @@ export default function App() {
       .eq("id", id);
   };
 
-  // ✅ filtro con área incluido
+  // FILTRO COMPLETO
   const convocatoriasFiltradas = convocatorias.filter(c =>
     (c.nombre || "").toLowerCase().includes(busqueda.toLowerCase()) ||
     (c.organizacion || "").toLowerCase().includes(busqueda.toLowerCase()) ||
@@ -92,7 +92,7 @@ export default function App() {
       fontFamily: "Montserrat, Trebuchet MS, Arial, sans-serif"
     }}>
 
-      {/* HEADER */}
+      {/* ✅ HEADER CORRECTO */}
       <div style={{
         display: "flex",
         justifyContent: "space-between",
@@ -103,9 +103,18 @@ export default function App() {
           Sistema de Convocatorias
         </h1>
 
-        {logo}
+        {/* ✅ LOGO BIEN RENDERIZADO */}
+        <img
+          src={logo}
+          alt="Logo CSSI"
+          style={{
+            height: "60px",
+            objectFit: "contain"
+          }}
+        />
       </div>
 
+      {/* CONTENEDOR */}
       <div style={{
         background: "white",
         padding: "25px",
@@ -222,7 +231,6 @@ export default function App() {
                 style={{ width: "100%" }}
               />
 
-              {/* ✅ NUEVO CAMPO ÁREA */}
               <label>Área</label>
               <input
                 value={c.area || ""}
@@ -295,3 +303,4 @@ export default function App() {
     </div>
   );
 }
+``
