@@ -1,21 +1,18 @@
 import { useState, useEffect } from "react";
 import { supabase } from "./supabaseClient";
-import logo from "./logo.png"; // ✅ LOGO
+import logo from "./logo.png";
 
 export default function App() {
   const [convocatorias, setConvocatorias] = useState([]);
   const [nombre, setNombre] = useState("");
+  const [busqueda, setBusqueda] = useState(""); // ✅ NUEVO
 
   const cargarConvocatorias = async () => {
     const { data, error } = await supabase
       .from("convocatorias")
       .select("*");
 
-    if (error) {
-      console.error("ERROR SELECT:", error);
-    } else {
-      setConvocatorias(data || []);
-    }
+    if (!error) setConvocatorias(data || []);
   };
 
   useEffect(() => {
@@ -25,7 +22,7 @@ export default function App() {
   const agregar = async () => {
     if (!nombre) return;
 
-    const { error } = await supabase.from("convocatorias").insert([
+    await supabase.from("convocatorias").insert([
       {
         nombre,
         organizacion: "",
@@ -39,10 +36,8 @@ export default function App() {
       }
     ]);
 
-    if (!error) {
-      setNombre("");
-      cargarConvocatorias();
-    }
+    setNombre("");
+    cargarConvocatorias();
   };
 
   const actualizarCampo = async (id, campo, valor) => {
@@ -52,13 +47,18 @@ export default function App() {
 
     setConvocatorias(copia);
 
-    const { error } = await supabase
+    await supabase
       .from("convocatorias")
       .update({ [campo]: valor })
       .eq("id", id);
-
-    if (error) console.error("ERROR UPDATE:", error);
   };
+
+  // ✅ FILTRO DE BÚSQUEDA
+  const convocatoriasFiltradas = convocatorias.filter(c =>
+    (c.nombre || "").toLowerCase().includes(busqueda.toLowerCase()) ||
+    (c.organizacion || "").toLowerCase().includes(busqueda.toLowerCase()) ||
+    (c.estatus || "").toLowerCase().includes(busqueda.toLowerCase())
+  );
 
   const resumenEstatus = {
     preparacion: convocatorias.filter(c => c.estatus === "En preparación").length,
@@ -85,12 +85,12 @@ export default function App() {
   return (
     <div style={{
       padding: "30px",
-      background: "#007AAE", // ✅ COLOR INSTITUCIONAL
+      background: "#007AAE",
       minHeight: "100vh",
       fontFamily: "Montserrat, Trebuchet MS, Arial, sans-serif"
     }}>
 
-      {/* ✅ HEADER CON LOGO */}
+      {/* HEADER */}
       <div style={{
         display: "flex",
         justifyContent: "space-between",
@@ -101,14 +101,9 @@ export default function App() {
           Sistema de Convocatorias
         </h1>
 
-        <img
-          src={logo}
-          alt="logo"
-          style={{ height: "60px" }}
-        />
+        <img src={logo} alt="logo" style={{ height: "60px" }} />
       </div>
 
-      {/* ✅ CONTENEDOR PRINCIPAL */}
       <div style={{
         background: "white",
         padding: "25px",
@@ -122,7 +117,6 @@ export default function App() {
           gap: "20px",
           marginBottom: "30px"
         }}>
-
           <div style={{
             background: "#F9FAFB",
             padding: "20px",
@@ -147,6 +141,21 @@ export default function App() {
               </p>
             ))}
           </div>
+        </div>
+
+        {/* ✅ BUSCADOR */}
+        <div style={{ marginBottom: "20px" }}>
+          <input
+            value={busqueda}
+            onChange={(e) => setBusqueda(e.target.value)}
+            placeholder="Buscar por nombre, organización o estatus..."
+            style={{
+              width: "100%",
+              padding: "10px",
+              border: "1px solid #ccc",
+              borderRadius: "8px"
+            }}
+          />
         </div>
 
         {/* CREAR */}
@@ -177,7 +186,7 @@ export default function App() {
           gridTemplateColumns: "repeat(auto-fill, minmax(350px, 1fr))",
           gap: "20px"
         }}>
-          {convocatorias.map(c => (
+          {convocatoriasFiltradas.map(c => ( // ✅ USAMOS FILTRADAS
             <div key={c.id} style={{
               background: "#F9FAFB",
               padding: "20px",
@@ -265,4 +274,3 @@ export default function App() {
     </div>
   );
 }
-``
