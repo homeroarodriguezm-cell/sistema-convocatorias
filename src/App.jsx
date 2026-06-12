@@ -5,7 +5,7 @@ import logo from "./logo.png";
 export default function App() {
   const [convocatorias, setConvocatorias] = useState([]);
   const [nombre, setNombre] = useState("");
-  const [busqueda, setBusqueda] = useState(""); // ✅ NUEVO
+  const [busqueda, setBusqueda] = useState("");
 
   const cargarConvocatorias = async () => {
     const { data, error } = await supabase
@@ -53,11 +53,12 @@ export default function App() {
       .eq("id", id);
   };
 
-  // ✅ FILTRO DE BÚSQUEDA
+  // ✅ FILTRO COMPLETO (incluye responsable)
   const convocatoriasFiltradas = convocatorias.filter(c =>
     (c.nombre || "").toLowerCase().includes(busqueda.toLowerCase()) ||
     (c.organizacion || "").toLowerCase().includes(busqueda.toLowerCase()) ||
-    (c.estatus || "").toLowerCase().includes(busqueda.toLowerCase())
+    (c.estatus || "").toLowerCase().includes(busqueda.toLowerCase()) ||
+    (c.responsable || "").toLowerCase().includes(busqueda.toLowerCase())
   );
 
   const resumenEstatus = {
@@ -104,6 +105,7 @@ export default function App() {
         <img src={logo} alt="logo" style={{ height: "60px" }} />
       </div>
 
+      {/* CONTENEDOR */}
       <div style={{
         background: "white",
         padding: "25px",
@@ -143,12 +145,12 @@ export default function App() {
           </div>
         </div>
 
-        {/* ✅ BUSCADOR */}
+        {/* BUSCADOR */}
         <div style={{ marginBottom: "20px" }}>
           <input
             value={busqueda}
             onChange={(e) => setBusqueda(e.target.value)}
-            placeholder="Buscar por nombre, organización o estatus..."
+            placeholder="Buscar por nombre, organización, estatus o responsable..."
             style={{
               width: "100%",
               padding: "10px",
@@ -186,7 +188,7 @@ export default function App() {
           gridTemplateColumns: "repeat(auto-fill, minmax(350px, 1fr))",
           gap: "20px"
         }}>
-          {convocatoriasFiltradas.map(c => ( // ✅ USAMOS FILTRADAS
+          {convocatoriasFiltradas.map(c => (
             <div key={c.id} style={{
               background: "#F9FAFB",
               padding: "20px",
@@ -207,6 +209,15 @@ export default function App() {
                 value={c.organizacion || ""}
                 onChange={(e) =>
                   actualizarCampo(c.id, "organizacion", e.target.value)
+                }
+                style={{ width: "100%" }}
+              />
+
+              <label>Responsable</label>
+              <input
+                value={c.responsable || ""}
+                onChange={(e) =>
+                  actualizarCampo(c.id, "responsable", e.target.value)
                 }
                 style={{ width: "100%" }}
               />
