@@ -7,14 +7,14 @@ export default function App() {
   const [nombre, setNombre] = useState("");
   const [busqueda, setBusqueda] = useState("");
 
-  const hoy = new Date(); // ✅ CLAVE
+  const hoy = new Date();
 
   const cargarConvocatorias = async () => {
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from("convocatorias")
       .select("*");
 
-    if (!error) setConvocatorias(data || []);
+    setConvocatorias(data || []);
   };
 
   useEffect(() => {
@@ -43,7 +43,7 @@ export default function App() {
   };
 
   const actualizarCampo = async (id, campo, valor) => {
-    const copia = convocatorias.map((item) =>
+    const copia = convocatorias.map(item =>
       item.id === id ? { ...item, [campo]: valor } : item
     );
 
@@ -55,7 +55,7 @@ export default function App() {
       .eq("id", id);
   };
 
-  // ✅ FILTRO
+  // FILTRO
   const convocatoriasFiltradas = convocatorias.filter(c =>
     (c.nombre || "").toLowerCase().includes(busqueda.toLowerCase()) ||
     (c.organizacion || "").toLowerCase().includes(busqueda.toLowerCase()) ||
@@ -64,7 +64,7 @@ export default function App() {
     (c.area || "").toLowerCase().includes(busqueda.toLowerCase())
   );
 
-  // ✅ ORDEN INTELIGENTE
+  // ORDEN
   const convocatoriasOrdenadas = [...convocatoriasFiltradas].sort((a, b) => {
     const fechaA = a.fecha ? new Date(a.fecha) : null;
     const fechaB = b.fecha ? new Date(b.fecha) : null;
@@ -72,12 +72,10 @@ export default function App() {
     const vencidaA = fechaA && fechaA < hoy;
     const vencidaB = fechaB && fechaB < hoy;
 
-    // primero las activas
     if (vencidaA !== vencidaB) {
       return vencidaA ? 1 : -1;
     }
 
-    // luego por fecha (más cercana primero)
     if (fechaA && fechaB) {
       return fechaA - fechaB;
     }
@@ -85,7 +83,7 @@ export default function App() {
     return 0;
   });
 
-  // ✅ PRÓXIMAS SOLO FUTURAS
+  // PRÓXIMAS
   const proximas = convocatorias
     .filter(c => c.fecha && new Date(c.fecha) >= hoy)
     .sort((a, b) => new Date(a.fecha) - new Date(b.fecha))
@@ -120,17 +118,12 @@ export default function App() {
       <div style={{
         display: "flex",
         justifyContent: "space-between",
-        alignItems: "center",
         marginBottom: "30px"
       }}>
-        <h1 style={{ color: "white", margin: 0 }}>
-          Sistema de Convocatorias
-        </h1>
-
+        <h1 style={{ color: "white" }}>Sistema de Convocatorias</h1>
         <img src={logo} alt="Logo" style={{ height: "60px" }} />
       </div>
 
-      {/* CONTENEDOR */}
       <div style={{
         background: "white",
         padding: "25px",
@@ -144,11 +137,7 @@ export default function App() {
           gap: "20px",
           marginBottom: "30px"
         }}>
-          <div style={{
-            background: "#F9FAFB",
-            padding: "20px",
-            borderRadius: "12px"
-          }}>
+          <div style={{ background: "#F9FAFB", padding: "20px", borderRadius: "12px" }}>
             <h3>📌 Estatus</h3>
             <p>🟡 {resumenEstatus.preparacion}</p>
             <p>🔵 {resumenEstatus.postuladas}</p>
@@ -156,35 +145,28 @@ export default function App() {
             <p>🔴 {resumenEstatus.rechazadas}</p>
           </div>
 
-          <div style={{
-            background: "#F9FAFB",
-            padding: "20px",
-            borderRadius: "12px"
-          }}>
+          <div style={{ background: "#F9FAFB", padding: "20px", borderRadius: "12px" }}>
             <h3>📅 Próximas</h3>
-            {proximas.length === 0 && <p>No hay próximas convocatorias</p>}
+            {proximas.length === 0 && <p>No hay próximas</p>}
             {proximas.map(c => (
-              <p key={c.id}>
-                {c.nombre} → {c.fecha}
-              </p>
+              <p key={c.id}>{c.nombre} → {c.fecha}</p>
             ))}
           </div>
         </div>
 
         {/* BUSCADOR */}
-        <div style={{ marginBottom: "20px" }}>
-          <input
-            value={busqueda}
-            onChange={(e) => setBusqueda(e.target.value)}
-            placeholder="Buscar..."
-            style={{
-              width: "100%",
-              padding: "10px",
-              borderRadius: "8px",
-              border: "1px solid #ccc"
-            }}
-          />
-        </div>
+        <input
+          value={busqueda}
+          onChange={(e) => setBusqueda(e.target.value)}
+          placeholder="Buscar..."
+          style={{
+            width: "100%",
+            padding: "10px",
+            marginBottom: "20px",
+            borderRadius: "8px",
+            border: "1px solid #ccc"
+          }}
+        />
 
         {/* CREAR */}
         <div style={{ marginBottom: "20px" }}>
@@ -194,16 +176,14 @@ export default function App() {
             placeholder="Nueva convocatoria"
             style={{ padding: "10px", marginRight: "10px" }}
           />
-          <button
-            onClick={agregar}
+          <button onClick={agregar}
             style={{
               background: "#007AAE",
               color: "white",
               padding: "10px",
               border: "none",
               borderRadius: "6px"
-            }}
-          >
+            }}>
             Agregar
           </button>
         </div>
@@ -218,62 +198,100 @@ export default function App() {
 
             const vencida = c.fecha && new Date(c.fecha) < hoy;
 
+            const opacar =
+              vencida &&
+              (c.estatus === "En preparación" ||
+               c.estatus === "No seleccionada");
+
             return (
               <div key={c.id} style={{
                 background: "#F9FAFB",
                 padding: "20px",
                 borderRadius: "12px",
                 borderLeft: `6px solid ${colorEstatus(c.estatus)}`,
-                opacity: vencida ? 0.5 : 1 // ✅ EFECTO
+                opacity: opacar ? 0.5 : 1
               }}>
 
-                <input value={c.nombre || ""}
-                  onChange={(e) => actualizarCampo(c.id, "nombre", e.target.value)}
-                  style={{ width: "100%", marginBottom: "10px" }}
+                <input
+                  value={c.nombre || ""}
+                  onChange={(e) =>
+                    actualizarCampo(c.id, "nombre", e.target.value)
+                  }
+                  style={{
+                    width: "100%",
+                    marginBottom: "10px",
+                    fontWeight: "bold"
+                  }}
                 />
 
                 <label>Organización</label>
-                <input value={c.organizacion || ""}
-                  onChange={(e) => actualizarCampo(c.id, "organizacion", e.target.value)}
-                  style={{ width: "100%" }}
+                <input
+                  value={c.organizacion || ""}
+                  onChange={(e) =>
+                    actualizarCampo(c.id, "organizacion", e.target.value)
+                  }
+                  style={{ width: "100%", marginBottom: "5px" }}
                 />
 
                 <label>Responsable</label>
-                <input value={c.responsable || ""}
-                  onChange={(e) => actualizarCampo(c.id, "responsable", e.target.value)}
-                  style={{ width: "100%" }}
+                <input
+                  value={c.responsable || ""}
+                  onChange={(e) =>
+                    actualizarCampo(c.id, "responsable", e.target.value)
+                  }
+                  style={{ width: "100%", marginBottom: "5px" }}
                 />
 
                 <label>Área</label>
-                <input value={c.area || ""}
-                  onChange={(e) => actualizarCampo(c.id, "area", e.target.value)}
-                  style={{ width: "100%" }}
+                <input
+                  value={c.area || ""}
+                  onChange={(e) =>
+                    actualizarCampo(c.id, "area", e.target.value)
+                  }
+                  style={{ width: "100%", marginBottom: "5px" }}
                 />
 
                 <label>Estatus</label>
-                <select value={c.estatus}
-                  onChange={(e) => actualizarCampo(c.id, "estatus", e.target.value)}>
+                <select
+                  value={c.estatus}
+                  onChange={(e) =>
+                    actualizarCampo(c.id, "estatus", e.target.value)
+                  }
+                  style={{ width: "100%", marginBottom: "10px" }}
+                >
                   <option>En preparación</option>
                   <option>Postulada</option>
                   <option>Aprobada</option>
                   <option>No seleccionada</option>
                 </select>
 
-                <input value={c.financiamiento || ""}
-                  onChange={(e) => actualizarCampo(c.id, "financiamiento", e.target.value)}
+                <input
+                  value={c.financiamiento || ""}
+                  onChange={(e) =>
+                    actualizarCampo(c.id, "financiamiento", e.target.value)
+                  }
+                  style={{ width: "100%", marginBottom: "5px" }}
                 />
 
-                <input type="date"
+                <input
+                  type="date"
                   value={c.fecha || ""}
-                  onChange={(e) => actualizarCampo(c.id, "fecha", e.target.value)}
+                  onChange={(e) =>
+                    actualizarCampo(c.id, "fecha", e.target.value)
+                  }
+                  style={{ width: "100%", marginBottom: "5px" }}
                 />
 
-                <input value={c.link || ""}
-                  onChange={(e) => actualizarCampo(c.id, "link", e.target.value)}
+                <input
+                  value={c.link || ""}
+                  onChange={(e) =>
+                    actualizarCampo(c.id, "link", e.target.value)
+                  }
+                  style={{ width: "100%" }}
                 />
 
               </div>
-            )
+            );
           })}
         </div>
 
