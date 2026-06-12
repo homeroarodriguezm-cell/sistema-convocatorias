@@ -12,15 +12,18 @@ export default function App() {
       .select("*")
       .order("id", { ascending: false });
 
-    if (!error) setConvocatorias(data || []);
-    else console.error("ERROR SELECT:", error);
+    if (error) {
+      console.error("ERROR SELECT:", error);
+    } else {
+      setConvocatorias(data || []);
+    }
   };
 
   useEffect(() => {
     cargarConvocatorias();
   }, []);
 
-  // ✅ Agregar convocatoria
+  // ✅ Agregar nueva convocatoria
   const agregar = async () => {
     if (!nombre) return;
 
@@ -37,15 +40,15 @@ export default function App() {
       }
     ]);
 
-    if (!error) {
+    if (error) {
+      console.error("ERROR INSERT:", error);
+    } else {
       cargarConvocatorias();
       setNombre("");
-    } else {
-      console.error("ERROR INSERT:", error);
     }
   };
 
-  // ✅ ✅ ✅ FIX REAL AQUÍ
+  // ✅ ✅ ✅ ESTE ES EL FIX REAL
   const actualizarCampo = async (id, campo, valor) => {
 
     // ✅ actualizar UI correctamente
@@ -58,7 +61,7 @@ export default function App() {
     // ✅ actualizar BD correctamente
     const { error } = await supabase
       .from("convocatorias")
-      .update({ [campo]: valor })
+      .update({ [campo]: valor })   // 🔥 FIX REAL AQUÍ
       .eq("id", id);
 
     if (error) {
@@ -70,8 +73,8 @@ export default function App() {
   const limpiarNumero = (valor) => {
     if (!valor) return 0;
     const limpio = valor.toString().replace(/\./g, "");
-    const n = parseFloat(limpio);
-    return isNaN(n) ? 0 : n;
+    const num = parseFloat(limpio);
+    return isNaN(num) ? 0 : num;
   };
 
   const totales = { USD: 0, EUR: 0, Bs: 0 };
