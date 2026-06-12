@@ -5,10 +5,7 @@ export default function App() {
   const [convocatorias, setConvocatorias] = useState([]);
   const [nombre, setNombre] = useState("");
 
-  useEffect(() => {
-    cargarConvocatorias();
-  }, []);
-
+  // ✅ Cargar datos
   const cargarConvocatorias = async () => {
     const { data, error } = await supabase
       .from("convocatorias")
@@ -22,21 +19,24 @@ export default function App() {
     }
   };
 
+  useEffect(() => {
+    cargarConvocatorias();
+  }, []);
+
+  // ✅ Crear nueva convocatoria
   const agregar = async () => {
     if (!nombre) return;
 
-    const { error } = await supabase
-      .from("convocatorias")
-      .insert([
-        {
-          nombre,
-          financiamiento: "",
-          moneda: "USD",
-          area: "",
-          fecha: null,
-          responsable: ""
-        }
-      ]);
+    const { error } = await supabase.from("convocatorias").insert([
+      {
+        nombre,
+        financiamiento: "",
+        moneda: "USD",
+        area: "",
+        fecha: null,
+        responsable: ""
+      }
+    ]);
 
     if (error) {
       console.error("ERROR INSERT:", error);
@@ -47,13 +47,19 @@ export default function App() {
     setNombre("");
   };
 
+  // ✅ ✅ CORRECCIÓN CLAVE AQUÍ
   const actualizarCampo = async (id, campo, valor) => {
-    const updateData = {};
-    updateData[campo] = valor;
+    // 🔹 1. Actualizar en pantalla inmediatamente
+    const copia = convocatorias.map((item) =>
+      item.id === id ? { ...item, [campo]: valor } : item
+    );
 
+    setConvocatorias(copia);
+
+    // 🔹 2. Guardar en Supabase
     const { error } = await supabase
       .from("convocatorias")
-      .update(updateData)
+      .update({ [campo]: valor })
       .eq("id", id);
 
     if (error) {
@@ -65,6 +71,7 @@ export default function App() {
     <div style={{ padding: "30px", fontFamily: "Arial", background: "#f5f5f5", minHeight: "100vh" }}>
       <h1>Sistema de Convocatorias 📊</h1>
 
+      {/* CREAR */}
       <div style={{ marginBottom: "20px" }}>
         <input
           value={nombre}
@@ -75,6 +82,7 @@ export default function App() {
         <button onClick={agregar}>Agregar</button>
       </div>
 
+      {/* TARJETAS */}
       <div style={{ display: "grid", gap: "15px", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))" }}>
         {convocatorias.map((c) => (
           <div
@@ -91,13 +99,17 @@ export default function App() {
             <label>💰 Financiamiento:</label>
             <input
               value={c.financiamiento || ""}
-              onChange={(e) => actualizarCampo(c.id, "financiamiento", e.target.value)}
+              onChange={(e) =>
+                actualizarCampo(c.id, "financiamiento", e.target.value)
+              }
             />
 
             <label>💱 Moneda:</label>
             <select
               value={c.moneda || "USD"}
-              onChange={(e) => actualizarCampo(c.id, "moneda", e.target.value)}
+              onChange={(e) =>
+                actualizarCampo(c.id, "moneda", e.target.value)
+              }
             >
               <option value="USD">USD</option>
               <option value="EUR">EUR</option>
@@ -107,20 +119,26 @@ export default function App() {
             <label>🧠 Área:</label>
             <input
               value={c.area || ""}
-              onChange={(e) => actualizarCampo(c.id, "area", e.target.value)}
+              onChange={(e) =>
+                actualizarCampo(c.id, "area", e.target.value)
+              }
             />
 
             <label>📅 Fecha límite:</label>
             <input
               type="date"
               value={c.fecha || ""}
-              onChange={(e) => actualizarCampo(c.id, "fecha", e.target.value || null)}
+              onChange={(e) =>
+                actualizarCampo(c.id, "fecha", e.target.value || null)
+              }
             />
 
             <label>👤 Responsable:</label>
             <input
               value={c.responsable || ""}
-              onChange={(e) => actualizarCampo(c.id, "responsable", e.target.value)}
+              onChange={(e) =>
+                actualizarCampo(c.id, "responsable", e.target.value)
+              }
             />
           </div>
         ))}
