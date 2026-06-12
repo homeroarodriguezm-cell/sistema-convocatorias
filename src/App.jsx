@@ -5,7 +5,7 @@ export default function App() {
   const [convocatorias, setConvocatorias] = useState([]);
   const [nombre, setNombre] = useState("");
 
-  // ✅ Cargar datos
+  // Cargar datos
   const cargarConvocatorias = async () => {
     console.log("Cargando datos...");
 
@@ -26,7 +26,7 @@ export default function App() {
     cargarConvocatorias();
   }, []);
 
-  // ✅ Agregar nueva
+  // Agregar nueva convocatoria
   const agregar = async () => {
     if (!nombre) return;
 
@@ -44,7 +44,7 @@ export default function App() {
           responsable: "",
         },
       ])
-      .select(); // IMPORTANTE
+      .select();
 
     if (error) {
       console.error("ERROR INSERT:", error);
@@ -56,7 +56,7 @@ export default function App() {
     setNombre("");
   };
 
-  // ✅ Actualizar campo
+  // Actualizar campo
   const actualizarCampo = async (id, campo, valor) => {
     console.log("Actualizando:", campo, valor);
 
@@ -127,13 +127,3 @@ export default function App() {
             <input
               value={c.area || ""}
               onChange={(e) => actualizarCampo(c.id, "area", e.target.value)}
-              style={{ width: "100%", marginBottom: "8px" }}
-            />
-
-            <label>📅 Fecha límite:</label>
-            <input
-              type="date"
-              value={c.fecha || ""}
-              onChange={(e) =>
-                actualizarCampo(c.id, "fecha", e.target.value || null)
-              }
