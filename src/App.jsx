@@ -207,13 +207,19 @@ export default function App() {
 
             const vencida = c.fecha && new Date(c.fecha) < hoy;
 
+            const debeOpacar =
+              vencida &&
+              (c.estatus === "En preparación" ||
+               c.estatus === "No se participó" ||
+               c.estatus === "No seleccionada");
+
             return (
               <div key={c.id} style={{
                 background: "#F9FAFB",
                 padding: "20px",
                 borderRadius: "12px",
                 borderLeft: `6px solid ${colorEstatus(c.estatus)}`,
-                opacity: vencida ? 0.5 : 1
+                opacity: debeOpacar ? 0.5 : 1
               }}>
 
                 <input
