@@ -14,7 +14,26 @@ export default function App() {
       .from("convocatorias")
       .select("*");
 
-    setConvocatorias(data || []);
+    if (data) {
+      await revisarVencidas(data);
+      setConvocatorias(data);
+    }
+  };
+
+  // ✅ AUTOMATIZACIÓN
+  const revisarVencidas = async (lista) => {
+    for (const c of lista) {
+      const vencida = c.fecha && new Date(c.fecha) < hoy;
+
+      if (vencida && c.estatus === "En preparación") {
+        await supabase
+          .from("convocatorias")
+          .update({ estatus: "No se participó" })
+          .eq("id", c.id);
+
+        c.estatus = "No se participó"; // actualización local inmediata
+      }
+    }
   };
 
   useEffect(() => {
@@ -93,7 +112,8 @@ export default function App() {
     preparacion: convocatorias.filter(c => c.estatus === "En preparación").length,
     postuladas: convocatorias.filter(c => c.estatus === "Postulada").length,
     aprobadas: convocatorias.filter(c => c.estatus === "Aprobada").length,
-    rechazadas: convocatorias.filter(c => c.estatus === "No seleccionada").length
+    rechazadas: convocatorias.filter(c => c.estatus === "No seleccionada").length,
+    noParticipadas: convocatorias.filter(c => c.estatus === "No se participó").length
   };
 
   const colorEstatus = (estatus) => {
@@ -102,6 +122,7 @@ export default function App() {
       case "Postulada": return "#3b82f6";
       case "Aprobada": return "#22c55e";
       case "No seleccionada": return "#ef4444";
+      case "No se participó": return "#6b7280";
       default: return "#ccc";
     }
   };
@@ -143,6 +164,7 @@ export default function App() {
             <p>🔵 {resumenEstatus.postuladas}</p>
             <p>🟢 {resumenEstatus.aprobadas}</p>
             <p>🔴 {resumenEstatus.rechazadas}</p>
+            <p>⚪ {resumenEstatus.noParticipadas}</p>
           </div>
 
           <div style={{ background: "#F9FAFB", padding: "20px", borderRadius: "12px" }}>
@@ -198,104 +220,11 @@ export default function App() {
 
             const vencida = c.fecha && new Date(c.fecha) < hoy;
 
-            const opacar =
-              vencida &&
-              (c.estatus === "En preparación" ||
-               c.estatus === "No seleccionada");
-
             return (
               <div key={c.id} style={{
                 background: "#F9FAFB",
                 padding: "20px",
                 borderRadius: "12px",
                 borderLeft: `6px solid ${colorEstatus(c.estatus)}`,
-                opacity: opacar ? 0.5 : 1
+                opacity: vencida ? 0.5 : 1
               }}>
-
-                <input
-                  value={c.nombre || ""}
-                  onChange={(e) =>
-                    actualizarCampo(c.id, "nombre", e.target.value)
-                  }
-                  style={{
-                    width: "100%",
-                    marginBottom: "10px",
-                    fontWeight: "bold"
-                  }}
-                />
-
-                <label>Organización</label>
-                <input
-                  value={c.organizacion || ""}
-                  onChange={(e) =>
-                    actualizarCampo(c.id, "organizacion", e.target.value)
-                  }
-                  style={{ width: "100%", marginBottom: "5px" }}
-                />
-
-                <label>Responsable</label>
-                <input
-                  value={c.responsable || ""}
-                  onChange={(e) =>
-                    actualizarCampo(c.id, "responsable", e.target.value)
-                  }
-                  style={{ width: "100%", marginBottom: "5px" }}
-                />
-
-                <label>Área</label>
-                <input
-                  value={c.area || ""}
-                  onChange={(e) =>
-                    actualizarCampo(c.id, "area", e.target.value)
-                  }
-                  style={{ width: "100%", marginBottom: "5px" }}
-                />
-
-                <label>Estatus</label>
-                <select
-                  value={c.estatus}
-                  onChange={(e) =>
-                    actualizarCampo(c.id, "estatus", e.target.value)
-                  }
-                  style={{ width: "100%", marginBottom: "10px" }}
-                >
-                  <option>En preparación</option>
-                  <option>Postulada</option>
-                  <option>Aprobada</option>
-                  <option>No seleccionada</option>
-                </select>
-
-                <input
-                  value={c.financiamiento || ""}
-                  onChange={(e) =>
-                    actualizarCampo(c.id, "financiamiento", e.target.value)
-                  }
-                  style={{ width: "100%", marginBottom: "5px" }}
-                />
-
-                <input
-                  type="date"
-                  value={c.fecha || ""}
-                  onChange={(e) =>
-                    actualizarCampo(c.id, "fecha", e.target.value)
-                  }
-                  style={{ width: "100%", marginBottom: "5px" }}
-                />
-
-                <input
-                  value={c.link || ""}
-                  onChange={(e) =>
-                    actualizarCampo(c.id, "link", e.target.value)
-                  }
-                  style={{ width: "100%" }}
-                />
-
-              </div>
-            );
-          })}
-        </div>
-
-      </div>
-    </div>
-  );
-}
