@@ -31,7 +31,7 @@ export default function App() {
           .update({ estatus: "No se participó" })
           .eq("id", c.id);
 
-        c.estatus = "No se participó"; // actualización local inmediata
+        c.estatus = "No se participó";
       }
     }
   };
@@ -61,6 +61,7 @@ export default function App() {
     cargarConvocatorias();
   };
 
+  // ✅ CORREGIDO
   const actualizarCampo = async (id, campo, valor) => {
     const copia = convocatorias.map(item =>
       item.id === id ? { ...item, [campo]: valor } : item
@@ -136,28 +137,15 @@ export default function App() {
     }}>
 
       {/* HEADER */}
-      <div style={{
-        display: "flex",
-        justifyContent: "space-between",
-        marginBottom: "30px"
-      }}>
+      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "30px" }}>
         <h1 style={{ color: "white" }}>Sistema de Convocatorias</h1>
         <img src={logo} alt="Logo" style={{ height: "60px" }} />
       </div>
 
-      <div style={{
-        background: "white",
-        padding: "25px",
-        borderRadius: "16px"
-      }}>
+      <div style={{ background: "white", padding: "25px", borderRadius: "16px" }}>
 
         {/* DASHBOARD */}
-        <div style={{
-          display: "grid",
-          gridTemplateColumns: "1fr 1fr",
-          gap: "20px",
-          marginBottom: "30px"
-        }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px", marginBottom: "30px" }}>
           <div style={{ background: "#F9FAFB", padding: "20px", borderRadius: "12px" }}>
             <h3>📌 Estatus</h3>
             <p>🟡 {resumenEstatus.preparacion}</p>
@@ -198,14 +186,13 @@ export default function App() {
             placeholder="Nueva convocatoria"
             style={{ padding: "10px", marginRight: "10px" }}
           />
-          <button onClick={agregar}
-            style={{
-              background: "#007AAE",
-              color: "white",
-              padding: "10px",
-              border: "none",
-              borderRadius: "6px"
-            }}>
+          <button onClick={agregar} style={{
+            background: "#007AAE",
+            color: "white",
+            padding: "10px",
+            border: "none",
+            borderRadius: "6px"
+          }}>
             Agregar
           </button>
         </div>
@@ -228,3 +215,72 @@ export default function App() {
                 borderLeft: `6px solid ${colorEstatus(c.estatus)}`,
                 opacity: vencida ? 0.5 : 1
               }}>
+
+                <input
+                  value={c.nombre || ""}
+                  onChange={(e) => actualizarCampo(c.id, "nombre", e.target.value)}
+                  style={{ width: "100%", marginBottom: "10px", fontWeight: "bold" }}
+                />
+
+                <label>Organización</label>
+                <input
+                  value={c.organizacion || ""}
+                  onChange={(e) => actualizarCampo(c.id, "organizacion", e.target.value)}
+                  style={{ width: "100%", marginBottom: "5px" }}
+                />
+
+                <label>Responsable</label>
+                <input
+                  value={c.responsable || ""}
+                  onChange={(e) => actualizarCampo(c.id, "responsable", e.target.value)}
+                  style={{ width: "100%", marginBottom: "5px" }}
+                />
+
+                <label>Área</label>
+                <input
+                  value={c.area || ""}
+                  onChange={(e) => actualizarCampo(c.id, "area", e.target.value)}
+                  style={{ width: "100%", marginBottom: "5px" }}
+                />
+
+                <label>Estatus</label>
+                <select
+                  value={c.estatus}
+                  onChange={(e) => actualizarCampo(c.id, "estatus", e.target.value)}
+                  style={{ width: "100%", marginBottom: "10px" }}
+                >
+                  <option>En preparación</option>
+                  <option>Postulada</option>
+                  <option>Aprobada</option>
+                  <option>No seleccionada</option>
+                  <option>No se participó</option>
+                </select>
+
+                <input
+                  value={c.financiamiento || ""}
+                  onChange={(e) => actualizarCampo(c.id, "financiamiento", e.target.value)}
+                  style={{ width: "100%", marginBottom: "5px" }}
+                />
+
+                <input
+                  type="date"
+                  value={c.fecha || ""}
+                  onChange={(e) => actualizarCampo(c.id, "fecha", e.target.value)}
+                  style={{ width: "100%", marginBottom: "5px" }}
+                />
+
+                <input
+                  value={c.link || ""}
+                  onChange={(e) => actualizarCampo(c.id, "link", e.target.value)}
+                  style={{ width: "100%" }}
+                />
+
+              </div>
+            );
+          })}
+        </div>
+
+      </div>
+    </div>
+  );
+}
