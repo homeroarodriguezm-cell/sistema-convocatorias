@@ -53,7 +53,8 @@ export default function App() {
         responsable: "",
         estatus: "En preparación",
         link: "",
-        proyecto_enviado: ""
+        proyecto_enviado: "",
+        observaciones: ""
       }
     ]);
 
@@ -68,10 +69,14 @@ export default function App() {
 
     setConvocatorias(copia);
 
-    await supabase
+    const { error } = await supabase
       .from("convocatorias")
       .update({ [campo]: valor })
       .eq("id", id);
+
+    if (error) {
+      console.error("Error al actualizar:", error);
+    }
   };
 
   const convocatoriasFiltradas = convocatorias.filter(c =>
@@ -79,7 +84,8 @@ export default function App() {
     (c.organizacion || "").toLowerCase().includes(busqueda.toLowerCase()) ||
     (c.estatus || "").toLowerCase().includes(busqueda.toLowerCase()) ||
     (c.responsable || "").toLowerCase().includes(busqueda.toLowerCase()) ||
-    (c.area || "").toLowerCase().includes(busqueda.toLowerCase())
+    (c.area || "").toLowerCase().includes(busqueda.toLowerCase()) ||
+    (c.observaciones || "").toLowerCase().includes(busqueda.toLowerCase())
   );
 
   const convocatoriasOrdenadas = [...convocatoriasFiltradas].sort((a, b) => {
@@ -115,29 +121,50 @@ export default function App() {
 
   const colorEstatus = (estatus) => {
     switch (estatus) {
-      case "En preparación": return "#facc15";
-      case "Postulada": return "#3b82f6";
-      case "Aprobada": return "#22c55e";
-      case "No seleccionada": return "#ef4444";
-      case "No se participó": return "#6b7280";
-      default: return "#ccc";
+      case "En preparación":
+        return "#facc15";
+      case "Postulada":
+        return "#3b82f6";
+      case "Aprobada":
+        return "#22c55e";
+      case "No seleccionada":
+        return "#ef4444";
+      case "No se participó":
+        return "#6b7280";
+      default:
+        return "#ccc";
     }
   };
 
   return (
-    <div style={{
-      padding: "30px",
-      background: "#007AAE",
-      minHeight: "100vh",
-      fontFamily: "Montserrat, Trebuchet MS, Arial, sans-serif"
-    }}>
-      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "30px" }}>
+    <div
+      style={{
+        padding: "30px",
+        background: "#007AAE",
+        minHeight: "100vh",
+        fontFamily: "Montserrat, Trebuchet MS, Arial, sans-serif"
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          marginBottom: "30px"
+        }}
+      >
         <h1 style={{ color: "white" }}>Sistema de Convocatorias</h1>
         <img src={logo} alt="Logo" style={{ height: "60px" }} />
       </div>
 
       <div style={{ background: "white", padding: "25px", borderRadius: "16px" }}>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px", marginBottom: "30px" }}>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            gap: "20px",
+            marginBottom: "30px"
+          }}
+        >
           <div style={{ background: "#F9FAFB", padding: "20px", borderRadius: "12px" }}>
             <h3>📌 Estatus</h3>
             <p>🟡 {resumenEstatus.preparacion}</p>
@@ -151,7 +178,9 @@ export default function App() {
             <h3>📅 Próximas</h3>
             {proximas.length === 0 && <p>No hay próximas</p>}
             {proximas.map(c => (
-              <p key={c.id}>{c.nombre} → {c.fecha}</p>
+              <p key={c.id}>
+                {c.nombre} → {c.fecha}
+              </p>
             ))}
           </div>
         </div>
@@ -190,45 +219,58 @@ export default function App() {
           </button>
         </div>
 
-        <div style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fill, minmax(350px, 1fr))",
-          gap: "20px"
-        }}>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fill, minmax(350px, 1fr))",
+            gap: "20px"
+          }}
+        >
           {convocatoriasOrdenadas.map(c => {
             const vencida = c.fecha && new Date(c.fecha) < hoy;
 
             const debeOpacar =
               vencida &&
               (c.estatus === "En preparación" ||
-               c.estatus === "No se participó" ||
-               c.estatus === "No seleccionada");
+                c.estatus === "No se participó" ||
+                c.estatus === "No seleccionada");
 
             return (
-              <div key={c.id} style={{
-                background: "#F9FAFB",
-                padding: "20px",
-                borderRadius: "12px",
-                borderLeft: `6px solid ${colorEstatus(c.estatus)}`,
-                opacity: debeOpacar ? 0.5 : 1
-              }}>
+              <div
+                key={c.id}
+                style={{
+                  background: "#F9FAFB",
+                  padding: "20px",
+                  borderRadius: "12px",
+                  borderLeft: `6px solid ${colorEstatus(c.estatus)}`,
+                  opacity: debeOpacar ? 0.5 : 1
+                }}
+              >
                 <input
                   value={c.nombre || ""}
                   onChange={(e) => actualizarCampo(c.id, "nombre", e.target.value)}
-                  style={{ width: "100%", marginBottom: "10px", fontWeight: "bold" }}
+                  style={{
+                    width: "100%",
+                    marginBottom: "10px",
+                    fontWeight: "bold"
+                  }}
                 />
 
                 <label>Organización</label>
                 <input
                   value={c.organizacion || ""}
-                  onChange={(e) => actualizarCampo(c.id, "organizacion", e.target.value)}
+                  onChange={(e) =>
+                    actualizarCampo(c.id, "organizacion", e.target.value)
+                  }
                   style={{ width: "100%", marginBottom: "5px" }}
                 />
 
                 <label>Responsable</label>
                 <input
                   value={c.responsable || ""}
-                  onChange={(e) => actualizarCampo(c.id, "responsable", e.target.value)}
+                  onChange={(e) =>
+                    actualizarCampo(c.id, "responsable", e.target.value)
+                  }
                   style={{ width: "100%", marginBottom: "5px" }}
                 />
 
@@ -255,7 +297,9 @@ export default function App() {
                 <label>Financiamiento</label>
                 <input
                   value={c.financiamiento || ""}
-                  onChange={(e) => actualizarCampo(c.id, "financiamiento", e.target.value)}
+                  onChange={(e) =>
+                    actualizarCampo(c.id, "financiamiento", e.target.value)
+                  }
                   style={{ width: "100%", marginBottom: "5px" }}
                   placeholder="Ej. 50.000,00"
                 />
@@ -290,9 +334,25 @@ export default function App() {
                 <label>Proyecto enviado</label>
                 <input
                   value={c.proyecto_enviado || ""}
-                  onChange={(e) => actualizarCampo(c.id, "proyecto_enviado", e.target.value)}
-                  style={{ width: "100%" }}
+                  onChange={(e) =>
+                    actualizarCampo(c.id, "proyecto_enviado", e.target.value)
+                  }
+                  style={{ width: "100%", marginBottom: "5px" }}
                   placeholder="https://..."
+                />
+
+                <label>Observaciones</label>
+                <textarea
+                  value={c.observaciones || ""}
+                  onChange={(e) =>
+                    actualizarCampo(c.id, "observaciones", e.target.value)
+                  }
+                  placeholder="Ej. No se aplicó por falta de carta aval / propuesta en revisión / queda para próxima cohorte..."
+                  style={{
+                    width: "100%",
+                    minHeight: "80px",
+                    resize: "vertical"
+                  }}
                 />
               </div>
             );
@@ -302,4 +362,3 @@ export default function App() {
     </div>
   );
 }
-``
