@@ -20,7 +20,6 @@ export default function App() {
     }
   };
 
-  // ✅ AUTOMATIZACIÓN
   const revisarVencidas = async (lista) => {
     for (const c of lista) {
       const vencida = c.fecha && new Date(c.fecha) < hoy;
@@ -53,7 +52,8 @@ export default function App() {
         fecha: null,
         responsable: "",
         estatus: "En preparación",
-        link: ""
+        link: "",
+        proyecto_enviado: ""
       }
     ]);
 
@@ -61,7 +61,6 @@ export default function App() {
     cargarConvocatorias();
   };
 
-  // ✅ CORREGIDO
   const actualizarCampo = async (id, campo, valor) => {
     const copia = convocatorias.map(item =>
       item.id === id ? { ...item, [campo]: valor } : item
@@ -75,7 +74,6 @@ export default function App() {
       .eq("id", id);
   };
 
-  // FILTRO
   const convocatoriasFiltradas = convocatorias.filter(c =>
     (c.nombre || "").toLowerCase().includes(busqueda.toLowerCase()) ||
     (c.organizacion || "").toLowerCase().includes(busqueda.toLowerCase()) ||
@@ -84,7 +82,6 @@ export default function App() {
     (c.area || "").toLowerCase().includes(busqueda.toLowerCase())
   );
 
-  // ORDEN
   const convocatoriasOrdenadas = [...convocatoriasFiltradas].sort((a, b) => {
     const fechaA = a.fecha ? new Date(a.fecha) : null;
     const fechaB = b.fecha ? new Date(b.fecha) : null;
@@ -103,7 +100,6 @@ export default function App() {
     return 0;
   });
 
-  // PRÓXIMAS
   const proximas = convocatorias
     .filter(c => c.fecha && new Date(c.fecha) >= hoy)
     .sort((a, b) => new Date(a.fecha) - new Date(b.fecha))
@@ -135,16 +131,12 @@ export default function App() {
       minHeight: "100vh",
       fontFamily: "Montserrat, Trebuchet MS, Arial, sans-serif"
     }}>
-
-      {/* HEADER */}
       <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "30px" }}>
         <h1 style={{ color: "white" }}>Sistema de Convocatorias</h1>
         <img src={logo} alt="Logo" style={{ height: "60px" }} />
       </div>
 
       <div style={{ background: "white", padding: "25px", borderRadius: "16px" }}>
-
-        {/* DASHBOARD */}
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px", marginBottom: "30px" }}>
           <div style={{ background: "#F9FAFB", padding: "20px", borderRadius: "12px" }}>
             <h3>📌 Estatus</h3>
@@ -164,7 +156,6 @@ export default function App() {
           </div>
         </div>
 
-        {/* BUSCADOR */}
         <input
           value={busqueda}
           onChange={(e) => setBusqueda(e.target.value)}
@@ -178,7 +169,6 @@ export default function App() {
           }}
         />
 
-        {/* CREAR */}
         <div style={{ marginBottom: "20px" }}>
           <input
             value={nombre}
@@ -186,25 +176,26 @@ export default function App() {
             placeholder="Nueva convocatoria"
             style={{ padding: "10px", marginRight: "10px" }}
           />
-          <button onClick={agregar} style={{
-            background: "#007AAE",
-            color: "white",
-            padding: "10px",
-            border: "none",
-            borderRadius: "6px"
-          }}>
+          <button
+            onClick={agregar}
+            style={{
+              background: "#007AAE",
+              color: "white",
+              padding: "10px",
+              border: "none",
+              borderRadius: "6px"
+            }}
+          >
             Agregar
           </button>
         </div>
 
-        {/* TARJETAS */}
         <div style={{
           display: "grid",
           gridTemplateColumns: "repeat(auto-fill, minmax(350px, 1fr))",
           gap: "20px"
         }}>
           {convocatoriasOrdenadas.map(c => {
-
             const vencida = c.fecha && new Date(c.fecha) < hoy;
 
             const debeOpacar =
@@ -221,7 +212,6 @@ export default function App() {
                 borderLeft: `6px solid ${colorEstatus(c.estatus)}`,
                 opacity: debeOpacar ? 0.5 : 1
               }}>
-
                 <input
                   value={c.nombre || ""}
                   onChange={(e) => actualizarCampo(c.id, "nombre", e.target.value)}
@@ -262,12 +252,26 @@ export default function App() {
                   <option>No se participó</option>
                 </select>
 
+                <label>Financiamiento</label>
                 <input
                   value={c.financiamiento || ""}
                   onChange={(e) => actualizarCampo(c.id, "financiamiento", e.target.value)}
                   style={{ width: "100%", marginBottom: "5px" }}
+                  placeholder="Ej. 50.000,00"
                 />
 
+                <label>Moneda</label>
+                <select
+                  value={c.moneda || "USD"}
+                  onChange={(e) => actualizarCampo(c.id, "moneda", e.target.value)}
+                  style={{ width: "100%", marginBottom: "5px" }}
+                >
+                  <option value="USD">USD</option>
+                  <option value="EUR">EUR</option>
+                  <option value="Bs">Bs</option>
+                </select>
+
+                <label>Fecha límite</label>
                 <input
                   type="date"
                   value={c.fecha || ""}
@@ -275,18 +279,27 @@ export default function App() {
                   style={{ width: "100%", marginBottom: "5px" }}
                 />
 
+                <label>Enlace de la convocatoria</label>
                 <input
                   value={c.link || ""}
                   onChange={(e) => actualizarCampo(c.id, "link", e.target.value)}
-                  style={{ width: "100%" }}
+                  style={{ width: "100%", marginBottom: "5px" }}
+                  placeholder="https://..."
                 />
 
+                <label>Proyecto enviado</label>
+                <input
+                  value={c.proyecto_enviado || ""}
+                  onChange={(e) => actualizarCampo(c.id, "proyecto_enviado", e.target.value)}
+                  style={{ width: "100%" }}
+                  placeholder="https://..."
+                />
               </div>
             );
           })}
         </div>
-
       </div>
     </div>
   );
 }
+``
